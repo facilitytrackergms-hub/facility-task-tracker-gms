@@ -2455,7 +2455,7 @@ document.getElementById("appMessageTitle").innerText = title || "Confirm";
   async function addCheckedTasksToAllAreas() {
     const checkedTasks = getCheckedTaskNames("bulkTaskCheck");
     if (checkedTasks.length === 0) {
-      alert("Select tasks.");
+      showAppMessage("Select tasks.", "Tasks");
       return;
     }
 
@@ -2466,11 +2466,11 @@ document.getElementById("appMessageTitle").innerText = title || "Confirm";
     });
 
     if (areas.length === 0) {
-      alert("No rooms found.");
+      showAppMessage("No rooms found.", "Tasks");
       return;
     }
 
-    const ok = confirm("Add checked tasks to all " + areas.length + " areas? Duplicates will be skipped.");
+    const ok = await showAppConfirmMessage("Add checked tasks to all " + areas.length + " areas? Duplicates will be skipped.", "Tasks");
     if (!ok) return;
 
     showLoading();
@@ -2495,13 +2495,13 @@ document.getElementById("appMessageTitle").innerText = title || "Confirm";
     await loadAdminTasks();
     drawAdminAreaButtons(selectedCategory);
     hideLoading();
-    alert("Added " + addedCount + " missing tasks.");
+    showAppMessage("Added " + addedCount + " missing tasks.", "Tasks");
   }
 
   async function deleteCheckedTasksFromAllAreas() {
     const checkedTasks = getCheckedTaskNames("bulkTaskCheck");
     if (checkedTasks.length === 0) {
-      alert("Select tasks.");
+      showAppMessage("Select tasks.", "Tasks");
       return;
     }
 
@@ -2522,11 +2522,11 @@ document.getElementById("appMessageTitle").innerText = title || "Confirm";
     });
 
     if (tasksToDelete.length === 0) {
-      alert("No matching tasks found.");
+      showAppMessage("No matching tasks found.", "Tasks");
       return;
     }
 
-    const ok = confirm("Delete " + tasksToDelete.length + " matching tasks?");
+    const ok = await showAppConfirmMessage("Delete " + tasksToDelete.length + " matching tasks?", "Tasks");
     if (!ok) return;
 
     showLoading();
@@ -2538,7 +2538,7 @@ document.getElementById("appMessageTitle").innerText = title || "Confirm";
     await loadAdminTasks();
     drawAdminAreaButtons(selectedCategory);
     hideLoading();
-    alert("Deleted " + tasksToDelete.length + " tasks.");
+    showAppMessage("Deleted " + tasksToDelete.length + " tasks.", "Tasks");
   }
 
   /* =========================
@@ -2548,7 +2548,7 @@ document.getElementById("appMessageTitle").innerText = title || "Confirm";
   async function addCheckedTasksToSingleArea() {
     const checkedTasks = getCheckedTaskNames("singleTaskCheck");
     if (checkedTasks.length === 0) {
-      alert("Select tasks.");
+      showAppMessage("Select tasks.", "Tasks");
       return;
     }
 
@@ -2590,7 +2590,7 @@ document.getElementById("appMessageTitle").innerText = title || "Confirm";
   async function deleteCheckedTasksFromSingleArea() {
     const checkedTasks = getCheckedTaskNames("singleTaskCheck");
     if (checkedTasks.length === 0) {
-      alert("Select tasks.");
+      showAppMessage("Select tasks.", "Tasks");
       return;
     }
 
@@ -2603,11 +2603,11 @@ document.getElementById("appMessageTitle").innerText = title || "Confirm";
     });
 
     if (tasksToDelete.length === 0) {
-      alert("No matching tasks found.");
+      showAppMessage("No matching tasks found.", "Tasks");
       return;
     }
 
-    const ok = confirm("Delete " + tasksToDelete.length + " matching tasks from this area?");
+    const ok = await showAppConfirmMessage("Delete " + tasksToDelete.length + " matching tasks from this area?", "Tasks");
     if (!ok) return;
 
     showLoading();
@@ -2732,7 +2732,7 @@ document.getElementById("appMessageTitle").innerText = title || "Confirm";
     const area = allAreas.find(function(item) { return item.id === areaId; });
 
     if (!area) {
-      alert("Area not found.");
+      showAppMessage("Area not found.", "Area");
       return;
     }
 
@@ -2909,7 +2909,7 @@ document.getElementById("appMessageTitle").innerText = title || "Confirm";
   }
   function openAdminAreaTasks() {
     if (!selectedAreaDocId) {
-      alert("Save area first.");
+      showAppMessage("Save area first.", "Tasks");
       return;
     }
 
@@ -3155,7 +3155,7 @@ document.getElementById("appMessageTitle").innerText = title || "Confirm";
     const taskName = document.getElementById("adminTaskNameInput").value.trim();
 
     if (!taskName) {
-      alert("Fill task name.");
+      showAppMessage("Fill task name.", "Tasks");
       return;
     }
 
@@ -3222,7 +3222,7 @@ document.getElementById("appMessageTitle").innerText = title || "Confirm";
     const schedule = document.getElementById("adminTaskScheduleInput").value.trim();
 
     if (!assignment || !category || !taskName || !schedule) {
-      alert("Fill assignment, task name, and schedule day.");
+      showAppMessage("Fill assignment, task name, and schedule day.", "Tasks");
       return;
     }
 
@@ -3233,11 +3233,11 @@ document.getElementById("appMessageTitle").innerText = title || "Confirm";
     });
 
     if (areas.length === 0) {
-      alert("No weekly rooms found for this day.");
+      showAppMessage("No weekly rooms found for this day.", "Tasks");
       return;
     }
 
-    const ok = confirm("Save this task to all " + areas.length + " weekly rooms for " + schedule + "?");
+    const ok = await showAppConfirmMessage("Save this task to all " + areas.length + " weekly rooms for " + schedule + "?", "Tasks");
     if (!ok) return;
 
     showLoading();
