@@ -1,0 +1,1489 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Facility Tracker</title>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f2f2f2;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 6px;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 430px;
+      background: white;
+      border-radius: 18px;
+      padding: 12px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.18);
+    }
+
+    .view-tag {
+      display: inline-block;
+      background: black;
+      color: white;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+
+    .view-center { text-align: center; }
+
+    h2, h3 {
+      text-align: center;
+      margin-top: 0;
+    }
+
+    h2 {
+      font-size: 22px;
+      margin-bottom: 8px;
+    }
+
+    h3 {
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      font-size: 18px;
+      padding: 10px;
+      margin: 6px 0 10px;
+      border-radius: 12px;
+      border: 1px solid #ccc;
+    }
+
+    textarea { min-height: 60px; }
+
+    button {
+      width: 100%;
+      border: none;
+      border-radius: 12px;
+      background: #1976d2;
+      color: white;
+      font-size: 17px;
+      font-weight: bold;
+      padding: 11px;
+      margin: 4px 0;
+      cursor: pointer;
+    }
+
+    button:active { transform: scale(0.98); }
+
+    .green { background: #2e7d32 !important; color: white !important; }
+    .yellow { background: #f9a825 !important; color: black !important; }
+    .red { background: #c62828 !important; color: white !important; }
+    .back { background: #555 !important; color: white !important; }
+    .hidden { display: none !important; }
+
+    .top-info-box,
+    .date-section-box {
+      border: 2px solid #e0e0e0;
+      border-radius: 18px;
+      padding: 10px;
+      margin: 4px 0 10px;
+      background: #fafafa;
+    }
+
+    .top-info-box h2 {
+      font-size: 24px;
+      margin-bottom: 0;
+    }
+
+    .date-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 0;
+    }
+
+    .date-row h3 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .date-change-btn {
+      width: auto;
+      font-size: 14px;
+      padding: 10px 14px;
+      margin: 0;
+      border-radius: 14px;
+      background: #555;
+      white-space: nowrap;
+    }
+
+    .hidden-date {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+      width: 1px;
+      height: 1px;
+    }
+
+    #coverScheduleSelect {
+      margin: 6px 0 0;
+      font-size: 18px;
+      font-weight: bold;
+      text-align: center;
+      text-align-last: center;
+      border-radius: 14px;
+      padding: 8px;
+      background: white;
+    }
+
+    .cover-btn {
+      background: #1976d2 !important;
+      font-size: 15px;
+      padding: 9px;
+      border-radius: 12px;
+      margin: 8px 0 0;
+    }
+
+    .top-date-box { margin-bottom: 12px; }
+
+    .category-section-box {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    #categoryButtons button {
+      min-height: 92px;
+      font-size: 20px;
+      border-radius: 18px;
+      margin: 0;
+      padding: 14px 8px;
+      line-height: 1.15;
+    }
+
+    .rooms-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+
+    .rooms-grid button {
+      width: 100%;
+      min-height: 62px;
+      font-size: 13px;
+      padding: 6px 3px;
+      line-height: 1.05;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    .room-number {
+      font-size: 18px;
+      font-weight: bold;
+      line-height: 1.05;
+      max-width: 100%;
+      overflow: hidden;
+      text-align: center;
+      word-break: normal;
+    }
+
+    .room-counter {
+      font-size: 13px;
+      font-weight: bold;
+      margin-top: 3px;
+    }
+
+    #checklist {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 5px;
+      margin-top: 8px;
+    }
+
+    .check-row {
+      font-size: 12px;
+      padding: 5px 3px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      text-align: center;
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+    }
+
+    .task-done { background: #e8f5e9; border-color: #2e7d32; }
+    .task-missing { background: #ffebee; border-color: #c62828; color: #c62828; font-weight: bold; }
+
+    .task-toggle-btn {
+      width: 100%;
+      margin: 0;
+      font-size: 15px;
+      padding: 10px 4px;
+      border-radius: 10px;
+    }
+
+    #message {
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+      margin: 8px 0;
+      color: #2e7d32;
+    }
+
+    .loading-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255,255,255,0.70);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 99999;
+    }
+
+    .spinner {
+      width: 70px;
+      height: 70px;
+      border: 8px solid #ddd;
+      border-top: 8px solid #1976d2;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .custom-modal-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.55);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 999999;
+    }
+
+    .custom-modal-box {
+      position: relative;
+      width: 90%;
+      max-width: 380px;
+      background: white;
+      border-radius: 22px;
+      padding: 15px;
+      text-align: center;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.35);
+    }
+
+    .custom-modal-box h3 {
+      font-size: 26px;
+      margin-bottom: 18px;
+      padding-right: 32px;
+      padding-left: 32px;
+    }
+
+    .custom-modal-box p {
+      font-size: 22px;
+      margin-bottom: 20px;
+    }
+
+    .custom-modal-row {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .custom-modal-row button {
+      width: 100%;
+      font-size: 18px;
+      padding: 16px 6px;
+      border-radius: 16px;
+      margin: 0;
+    }
+
+    .modal-close-x {
+      position: absolute;
+      top: 7px;
+      right: 8px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #555;
+      color: white;
+      font-size: 18px;
+      font-weight: bold;
+      padding: 0;
+      margin: 0;
+      line-height: 28px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="card">
+
+  <div id="view2">
+    <div class="date-section-box">
+      <div class="date-row">
+        <h3 id="workDateTitle"></h3>
+        <button class="date-change-btn" onclick="openCalendar()">CHANGE DATE</button>
+        <input type="date" id="quickDatePicker" class="hidden-date" onchange="changeWorkDateFromCalendar()">
+      </div>
+    </div>
+
+    <div class="top-info-box">
+      <h2 id="assignmentTitle"></h2>
+      <button id="coverScheduleButton" class="cover-btn" onclick="showCoverScheduleDropdown()">COVER SCHEDULE</button>
+      <select id="coverScheduleSelect" class="hidden" onchange="changeCoverSchedule()"></select>
+    </div>
+
+    <div id="categoryButtons" class="category-section-box"></div>
+    <button class="back" onclick="logout()">LOGOUT</button>
+  </div>
+
+  <div id="view3" class="hidden">
+    <div class="view-center">
+      <div class="view-tag" id="areaViewTag">VIEW 3</div>
+    </div>
+
+    <div id="areaBigDatePickerBox" class="top-date-box hidden">
+      <h3 id="areaDateTitle"></h3>
+      <input type="date" id="bigDatePicker" onchange="changeWorkDateFromBigPicker()">
+    </div>
+
+    <div id="areaButtons" class="rooms-grid"></div>
+    <button class="back" onclick="backToCategories()">BACK</button>
+  </div>
+
+  <div id="view4" class="hidden">
+    <div class="view-center">
+      <div class="view-tag">VIEW 7</div>
+    </div>
+
+    <button id="allTasksButton" class="green" onclick="confirmCheckAllTasks()">ALL TASKS</button>
+
+    <div id="checklistBox">
+      <div id="checklist"></div>
+
+      <div id="reasonBox" class="hidden">
+        <h3>Reason</h3>
+        <select id="reason">
+          <option value="">Select reason</option>
+          <option>Resident in room</option>
+          <option>Resident refused</option>
+          <option>Room occupied</option>
+          <option>Supplies missing</option>
+          <option>Maintenance issue</option>
+          <option>Not enough time</option>
+          <option>Other</option>
+        </select>
+        <textarea id="note" placeholder="Other reason / notes"></textarea>
+      </div>
+
+      <button class="green" onclick="saveTaskChecklist()">SAVE</button>
+    </div>
+
+    <p id="message"></p>
+    <button class="back" onclick="backToAreas()">BACK</button>
+  </div>
+
+</div>
+
+<div id="customConfirmModal" class="custom-modal-bg hidden">
+  <div class="custom-modal-box">
+    <button class="modal-close-x" onclick="customConfirmNo()">×</button>
+    <h3 id="customConfirmTitle">Confirm</h3>
+    <p id="customConfirmText"></p>
+    <div class="custom-modal-row">
+      <button id="customConfirmYesButton" class="green" onclick="customConfirmYes()">YES</button>
+      <button id="customConfirmNoButton" class="back" onclick="customConfirmNo()">CANCEL</button>
+    </div>
+  </div>
+</div>
+
+<div id="loadingScreen" class="loading-bg hidden">
+  <div class="spinner"></div>
+</div>
+
+<script type="module">
+
+  /* 01 - FIREBASE CONFIG */
+
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+
+  import {
+    getFirestore,
+    collection,
+    query,
+    where,
+    getDocs,
+    doc,
+    getDoc,
+    setDoc,
+    serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBgq_ooBeEN4noEyIxYPLVokgM6RjCO648",
+    authDomain: "gms-task-tracker.firebaseapp.com",
+    projectId: "gms-task-tracker",
+    storageBucket: "gms-task-tracker.firebasestorage.app",
+    messagingSenderId: "790880979860",
+    appId: "1:790880979860:web:6faee2a6e56955af3c1d81",
+    measurementId: "G-5TRHQMS039"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+
+  /* 02 - SESSION */
+
+  const sessionData = JSON.parse(sessionStorage.getItem("currentEmployee") || "null");
+  const selectedDailyTask = JSON.parse(sessionStorage.getItem("selectedDailyTask") || "null");
+
+  if (!sessionData) {
+    window.location.href = "index.html";
+  }
+
+  const employeeId =
+    sessionData.employeeId ||
+    sessionData.id ||
+    sessionData.pin ||
+    "";
+
+  const employeeName =
+    sessionData.employeeName ||
+    sessionData.name ||
+    ((sessionData.firstName || "") + " " + (sessionData.lastName || "")).trim() ||
+    "Employee";
+
+  let homeAssignment =
+    sessionData.defaultSchedule ||
+    sessionData.default_schedule ||
+    (selectedDailyTask && selectedDailyTask.assignment) ||
+    sessionData.assignment ||
+    "HK1";
+
+  if (homeAssignment === "Housekeeping") {
+    homeAssignment = sessionData.defaultSchedule || "HK1";
+  }
+
+  let currentAssignment = homeAssignment;
+
+
+  /* 03 - STATE */
+
+  let housekeepingMode = "two";
+  let currentWorkDateISO = getTodayISO();
+  let currentWorkDateDisplay = "";
+  let currentWorkDayName = "";
+
+  let allSchedules = [];
+  let allAreasForSchedule = [];
+  let allTasksForSchedule = [];
+  let allTasksForDay = [];
+  let progressData = {};
+
+  let selectedCategory = "";
+  let currentAreaId = "";
+  let currentAreaName = "";
+  let currentTaskList = [];
+  let selectedDehumidifierPeriod = "";
+
+  let customConfirmResolve = null;
+  let customConfirmYesValue = true;
+  let customConfirmNoValue = false;
+
+  document.getElementById("assignmentTitle").innerText = currentAssignment;
+
+  startSchedule();
+
+
+  /* 04 - START */
+
+  async function startSchedule() {
+    await loadAssignmentTasks();
+    showView(2);
+  }
+
+  async function loadAssignmentTasks() {
+    showLoading();
+
+    try {
+      updateDateDisplay();
+      updateDateTitles();
+
+      housekeepingMode = await loadHousekeepingMode();
+      allSchedules = await loadSchedules();
+      loadCoverScheduleDropdown();
+
+      const modeType = getModeTypeForAssignment(currentAssignment);
+
+      allAreasForSchedule = await loadAreasForAssignment(currentAssignment);
+      allTasksForSchedule = await loadTasksForAssignment(currentAssignment);
+      progressData = await loadProgressData();
+
+      allTasksForDay = buildTasksForToday(modeType);
+
+      drawCategories();
+    } catch (error) {
+      console.error(error);
+      alert("Could not load schedule.");
+    }
+
+    hideLoading();
+  }
+
+
+  /* 05 - LOW READ FIRESTORE LOADERS */
+
+  async function loadHousekeepingMode() {
+    const ref = doc(db, "settings", "housekeepingmode");
+    const snap = await getDoc(ref);
+
+    if (!snap.exists()) return "two";
+
+    const data = snap.data();
+    return String(data.settingValue || data.housekeepingMode || "two").trim().toLowerCase();
+  }
+
+  async function loadSchedules() {
+    const snap = await getDocs(collection(db, "schedules"));
+
+    return snap.docs
+      .map(function(item) {
+        return {
+          id: item.id,
+          ...item.data()
+        };
+      })
+      .filter(function(item) {
+        return item.active !== false;
+      });
+  }
+
+  async function loadAreasForAssignment(scheduleName) {
+    const areaQuery = query(
+      collection(db, "areas"),
+      where("schedule", "==", scheduleName)
+    );
+
+    const snap = await getDocs(areaQuery);
+
+    return snap.docs
+      .map(function(item) {
+        return {
+          id: item.id,
+          ...item.data()
+        };
+      })
+      .filter(function(item) {
+        return item.active !== false;
+      });
+  }
+
+  async function loadTasksForAssignment(scheduleName) {
+    const taskQuery = query(
+      collection(db, "tasks"),
+      where("schedule", "==", scheduleName)
+    );
+
+    const snap = await getDocs(taskQuery);
+
+    return snap.docs
+      .map(function(item) {
+        return {
+          id: item.id,
+          ...item.data()
+        };
+      })
+      .filter(function(item) {
+        return item.active !== false;
+      });
+  }
+
+  async function loadProgressData() {
+    const statusQuery = query(
+      collection(db, "task_area_status"),
+      where("workDateISO", "==", currentWorkDateISO)
+    );
+
+    const snap = await getDocs(statusQuery);
+    const data = {};
+
+    snap.docs.forEach(function(item) {
+      const status = item.data();
+
+      if (String(status.employeeId || "") !== String(employeeId || "")) return;
+      if (String(status.schedule || "") !== String(currentAssignment || "")) return;
+      if (!status.areaId) return;
+
+      data[status.areaId] = status;
+    });
+
+    return data;
+  }
+
+
+  /* 06 - BUILD DAILY TASK DATA */
+
+  function buildTasksForToday(modeType) {
+    const areasById = {};
+
+    allAreasForSchedule.forEach(function(area) {
+      if (String(area.modeType || "") !== String(modeType || "")) return;
+      if (!isCorrectDay(area.day)) return;
+      areasById[area.areaId || area.id] = area;
+    });
+
+    return allTasksForSchedule
+      .filter(function(task) {
+        const area = areasById[task.areaId];
+        if (!area) return false;
+        if (String(task.modeType || "") !== String(modeType || "")) return false;
+        if (!isCorrectDay(task.day)) return false;
+        return true;
+      })
+      .map(function(task) {
+        const area = areasById[task.areaId];
+
+        return {
+          areaId: task.areaId,
+          areaName: area.areaName || task.areaName || "",
+          areaSearch: area.areaSearch || task.areaSearch || "",
+          taskId: task.taskId || task.id,
+          taskName: task.taskName || "",
+          taskSearch: task.taskSearch || "",
+          category: area.category || task.category || "",
+          categoryKey: area.categoryKey || task.categoryKey || "",
+          day: area.day || task.day || "",
+          schedule: currentAssignment,
+          modeType: modeType,
+          floor: area.floor || task.floor || "",
+          laundryType: area.laundryType || task.laundryType || "",
+          time: task.time || "",
+          sourceSheet: task.sourceSheet || ""
+        };
+      });
+  }
+
+  function isCorrectDay(dayValue) {
+    const day = String(dayValue || "").trim().toLowerCase();
+
+    if (!day || day === "daily") return true;
+
+    return day === currentWorkDayName.toLowerCase();
+  }
+
+  function getModeTypeForAssignment(assignment) {
+    if (assignment === "Laundry") return "laundry";
+    if (["1stfloor", "2ndFloor", "3rdFloor"].includes(assignment)) return "three";
+    return "two";
+  }
+
+
+  /* 07 - COVER SCHEDULE */
+
+  function loadCoverScheduleDropdown() {
+    const select = document.getElementById("coverScheduleSelect");
+
+    let schedules = allSchedules.filter(function(item) {
+      if (item.scheduleId === "Laundry") return true;
+      if (housekeepingMode === "three") return item.modeType === "three";
+      return item.modeType === "two";
+    });
+
+    schedules = schedules.sort(function(a, b) {
+      return String(a.scheduleId || "").localeCompare(String(b.scheduleId || ""));
+    });
+
+    select.innerHTML = "";
+
+    schedules.forEach(function(schedule) {
+      const value = schedule.scheduleId || schedule.name || schedule.id;
+      const option = document.createElement("option");
+      option.value = value;
+      option.innerText = schedule.label || value;
+
+      if (value === currentAssignment) {
+        option.selected = true;
+      }
+
+      select.appendChild(option);
+    });
+  }
+
+  function showCoverScheduleDropdown() {
+    document.getElementById("coverScheduleSelect").classList.remove("hidden");
+    document.getElementById("coverScheduleButton").classList.add("hidden");
+  }
+
+  async function changeCoverSchedule() {
+    const select = document.getElementById("coverScheduleSelect");
+
+    if (!select.value) return;
+
+    currentAssignment = select.value;
+    selectedCategory = "";
+    currentAreaId = "";
+    currentAreaName = "";
+
+    await loadAssignmentTasks();
+    showView(2);
+  }
+
+
+  /* 08 - DATE */
+
+  function getTodayISO() {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    return yyyy + "-" + mm + "-" + dd;
+  }
+
+  function updateDateDisplay() {
+    const date = new Date(currentWorkDateISO + "T00:00:00");
+
+    const weekdays = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday"
+    ];
+
+    currentWorkDayName = weekdays[date.getDay()];
+
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const dd = String(date.getDate()).padStart(2, "0");
+    const yyyy = date.getFullYear();
+
+    currentWorkDateDisplay = mm + "/" + dd + "/" + yyyy;
+  }
+
+  function updateDateTitles() {
+    document.getElementById("assignmentTitle").innerText =
+      currentAssignment === homeAssignment
+        ? currentAssignment
+        : currentAssignment + " COVER";
+
+    document.getElementById("workDateTitle").innerText = currentWorkDayName;
+    document.getElementById("areaDateTitle").innerText = currentWorkDayName;
+  }
+
+  function openCalendar() {
+    const picker = document.getElementById("quickDatePicker");
+    picker.value = currentWorkDateISO;
+
+    if (picker.showPicker) {
+      picker.showPicker();
+    } else {
+      picker.click();
+    }
+  }
+
+  async function changeWorkDateFromCalendar() {
+    const picker = document.getElementById("quickDatePicker");
+    if (!picker.value) return;
+
+    currentWorkDateISO = picker.value;
+    await loadAssignmentTasks();
+
+    if (selectedCategory) {
+      drawAreaButtons(selectedCategory);
+      showView(3);
+    } else {
+      showView(2);
+    }
+  }
+
+  async function changeWorkDateFromBigPicker() {
+    const picker = document.getElementById("bigDatePicker");
+    if (!picker.value) return;
+
+    currentWorkDateISO = picker.value;
+    await loadAssignmentTasks();
+
+    if (selectedCategory) {
+      drawAreaButtons(selectedCategory);
+      showView(3);
+    }
+  }
+
+
+  /* 09 - CATEGORY VIEW */
+
+  function drawCategories() {
+    const box = document.getElementById("categoryButtons");
+    box.innerHTML = "";
+
+    const categories =
+      currentAssignment === "Laundry"
+        ? ["Weekly Laundry", "Daily Laundry"]
+        : ["Common Area", "Weekly Room", "Daily Room", "Dehumidifier"];
+
+    categories.forEach(function(category) {
+      const categoryTasks = allTasksForDay.filter(function(task) {
+        return task.category === category;
+      });
+
+      if (categoryTasks.length === 0) return;
+
+      const counts = getTaskCounts(categoryTasks);
+      const btn = document.createElement("button");
+
+      btn.innerText = category + " " + counts.completed + "/" + categoryTasks.length;
+      btn.className = getProgressColor(counts.completed, counts.incomplete, categoryTasks.length);
+
+      btn.onclick = function() {
+        selectedCategory = category;
+        drawAreaButtons(category);
+        showView(3);
+      };
+
+      box.appendChild(btn);
+    });
+
+    if (box.innerHTML === "") {
+      const emptyMessage = document.createElement("h3");
+      emptyMessage.innerText = "No tasks found for " + currentAssignment;
+      box.appendChild(emptyMessage);
+    }
+  }
+
+
+  /* 10 - AREA VIEW */
+
+  function drawAreaButtons(category) {
+    const box = document.getElementById("areaButtons");
+    box.innerHTML = "";
+
+    setAreaViewTag(category);
+    setAreaDatePickerVisibility(category);
+
+    document.getElementById("bigDatePicker").value = currentWorkDateISO;
+    document.getElementById("areaDateTitle").innerText = currentWorkDayName;
+
+    const categoryTasks = allTasksForDay.filter(function(task) {
+      return task.category === category;
+    });
+
+    const areaIds = [];
+    const used = {};
+
+    categoryTasks.forEach(function(task) {
+      if (used[task.areaId]) return;
+      used[task.areaId] = true;
+      areaIds.push(task.areaId);
+    });
+
+    areaIds.forEach(function(areaId) {
+      const areaTasks = categoryTasks.filter(function(task) {
+        return task.areaId === areaId;
+      });
+
+      const areaName = areaTasks[0] ? areaTasks[0].areaName : areaId;
+      const counts = getTaskCounts(areaTasks);
+      const total = areaTasks.length;
+
+      const btn = document.createElement("button");
+      btn.innerHTML =
+        '<div class="room-number">' + getAreaDisplayName(areaName) + '</div>' +
+        '<div class="room-counter">' + counts.completed + '/' + total + (counts.incomplete > 0 ? ' ISSUE' : '') + '</div>';
+
+      btn.className = getProgressColor(counts.completed, counts.incomplete, total);
+
+      btn.onclick = function() {
+        openAreaChoice(areaId, areaName);
+      };
+
+      box.appendChild(btn);
+    });
+  }
+
+  function getAreaDisplayName(area) {
+    return String(area || "")
+      .replace(/Bathrooms/gi, "Bath")
+      .replace(/Bathroom/gi, "Bath");
+  }
+
+  function setAreaViewTag(category) {
+    const tag = document.getElementById("areaViewTag");
+
+    if (category === "Common Area") tag.innerText = "VIEW 3";
+    else if (category === "Weekly Room") tag.innerText = "VIEW 4";
+    else if (category === "Daily Room") tag.innerText = "VIEW 5";
+    else if (category === "Dehumidifier") tag.innerText = "VIEW 6";
+    else if (category === "Weekly Laundry") tag.innerText = "VIEW 4";
+    else if (category === "Daily Laundry") tag.innerText = "VIEW 5";
+    else tag.innerText = "VIEW 3";
+  }
+
+  function setAreaDatePickerVisibility(category) {
+    const pickerBox = document.getElementById("areaBigDatePickerBox");
+    const dateTitle = document.getElementById("areaDateTitle");
+
+    if (category === "Weekly Room" || category === "Weekly Laundry") {
+      pickerBox.classList.remove("hidden");
+      dateTitle.classList.remove("hidden");
+    } else {
+      pickerBox.classList.add("hidden");
+      dateTitle.classList.add("hidden");
+    }
+  }
+
+
+  /* 11 - COUNTS */
+
+  function getTaskCounts(tasks) {
+    let completed = 0;
+    let incomplete = 0;
+
+    tasks.forEach(function(task) {
+      const areaStatus = progressData[task.areaId] || {};
+      const taskStatus = areaStatus.tasks && areaStatus.tasks[task.taskId]
+        ? areaStatus.tasks[task.taskId].status
+        : "";
+
+      if (taskStatus === "Completed") completed++;
+      else if (taskStatus === "Incomplete") incomplete++;
+    });
+
+    return {
+      completed: completed,
+      incomplete: incomplete
+    };
+  }
+
+  function getProgressColor(completed, incomplete, total) {
+    if (incomplete > 0) return "yellow";
+    if (completed === 0) return "red";
+    if (completed >= total) return "green";
+    return "yellow";
+  }
+
+
+  /* 12 - TASK VIEW */
+
+  async function openAreaChoice(areaId, areaName) {
+    if (selectedCategory === "Dehumidifier") {
+      await openDehumidifierChoice(areaId, areaName);
+      return;
+    }
+
+    const choice = await showCustomChoice(areaName, "", "SAVE", "TASKS");
+
+    if (choice === "save") {
+      loadCurrentTaskList(areaId, areaName);
+      await saveCurrentAreaComplete();
+      return;
+    }
+
+    if (choice === "tasks") {
+      openTaskGroup(areaId, areaName);
+    }
+  }
+
+  async function openDehumidifierChoice(areaId, areaName) {
+    selectedDehumidifierPeriod = getCurrentDehumidifierPeriod();
+
+    const choice = await showCustomChoice(areaName, "", selectedDehumidifierPeriod, "TASKS");
+
+    if (choice === "save") {
+      loadCurrentTaskList(areaId, areaName);
+      filterCurrentTasksForPeriod();
+      await saveCurrentAreaComplete();
+      return;
+    }
+
+    if (choice === "tasks") {
+      openTaskGroup(areaId, areaName);
+    }
+  }
+
+  function openTaskGroup(areaId, areaName) {
+    loadCurrentTaskList(areaId, areaName);
+
+    if (selectedCategory === "Dehumidifier") {
+      filterCurrentTasksForPeriod();
+    }
+
+    document.getElementById("allTasksButton").innerText =
+      selectedCategory === "Dehumidifier" && selectedDehumidifierPeriod
+        ? areaName + " " + selectedDehumidifierPeriod
+        : areaName;
+
+    document.getElementById("message").innerText = "";
+    document.getElementById("reason").value = "";
+    document.getElementById("note").value = "";
+    document.getElementById("reasonBox").classList.add("hidden");
+
+    buildChecklist();
+    showView(4);
+  }
+
+  function loadCurrentTaskList(areaId, areaName) {
+    currentAreaId = areaId;
+    currentAreaName = areaName;
+
+    currentTaskList = allTasksForDay.filter(function(task) {
+      return task.areaId === areaId && task.category === selectedCategory;
+    });
+  }
+
+  function getCurrentDehumidifierPeriod() {
+    const now = new Date();
+    return now.getHours() < 12 ? "AM" : "PM";
+  }
+
+  function filterCurrentTasksForPeriod() {
+    if (!selectedDehumidifierPeriod) {
+      selectedDehumidifierPeriod = getCurrentDehumidifierPeriod();
+    }
+
+    const filtered = currentTaskList.filter(function(task) {
+      return isTaskForPeriod(task, selectedDehumidifierPeriod);
+    });
+
+    if (filtered.length > 0) {
+      currentTaskList = filtered;
+    }
+  }
+
+  function isTaskForPeriod(task, period) {
+    const text = String(task.taskName || "").toUpperCase() + " " + String(task.time || "").toUpperCase();
+    return text.includes(period);
+  }
+
+  function buildChecklist() {
+    const box = document.getElementById("checklist");
+    box.innerHTML = "";
+
+    const areaStatus = progressData[currentAreaId] || {};
+    const savedTasks = areaStatus.tasks || {};
+
+    currentTaskList.forEach(function(task, index) {
+      const savedStatus = savedTasks[task.taskId] ? savedTasks[task.taskId].status : "";
+      const isCompleted = savedStatus === "Completed";
+
+      const div = document.createElement("div");
+      div.className = isCompleted ? "check-row task-done" : "check-row task-missing";
+
+      div.innerHTML =
+        '<button ' +
+        'id="task_' + index + '" ' +
+        'class="task-toggle-btn ' + (isCompleted ? 'green' : 'red') + '" ' +
+        'data-done="' + (isCompleted ? 'true' : 'false') + '" ' +
+        'onclick="toggleTaskButton(' + index + ')">' +
+        escapeHtml(task.taskName) +
+        '</button>';
+
+      box.appendChild(div);
+    });
+
+    updateReasonVisibility();
+  }
+
+
+  /* 13 - CHECKLIST ACTIONS */
+
+  async function confirmCheckAllTasks() {
+    const confirmed = await showCustomConfirm("All tasks done?");
+    if (!confirmed) return;
+    checkAllTasks();
+  }
+
+  function checkAllTasks() {
+    currentTaskList.forEach(function(task, index) {
+      const btn = document.getElementById("task_" + index);
+      if (!btn) return;
+
+      btn.dataset.done = "true";
+      btn.classList.remove("red");
+      btn.classList.add("green");
+    });
+
+    updateChecklistColors();
+    document.getElementById("reasonBox").classList.add("hidden");
+    document.getElementById("reason").value = "";
+    document.getElementById("note").value = "";
+  }
+
+  function toggleTaskButton(index) {
+    const btn = document.getElementById("task_" + index);
+    btn.dataset.done = btn.dataset.done === "true" ? "false" : "true";
+    updateChecklistColors();
+  }
+
+  function updateChecklistColors() {
+    currentTaskList.forEach(function(task, index) {
+      const btn = document.getElementById("task_" + index);
+      if (!btn) return;
+
+      const row = btn.closest(".check-row");
+      if (!row) return;
+
+      if (btn.dataset.done === "true") {
+        row.classList.remove("task-missing");
+        row.classList.add("task-done");
+        btn.classList.remove("red");
+        btn.classList.add("green");
+      } else {
+        row.classList.remove("task-done");
+        row.classList.add("task-missing");
+        btn.classList.remove("green");
+        btn.classList.add("red");
+      }
+    });
+
+    updateReasonVisibility();
+  }
+
+  function updateReasonVisibility() {
+    let allChecked = true;
+
+    currentTaskList.forEach(function(task, index) {
+      const btn = document.getElementById("task_" + index);
+      if (btn && btn.dataset.done !== "true") {
+        allChecked = false;
+      }
+    });
+
+    if (allChecked) {
+      document.getElementById("reasonBox").classList.add("hidden");
+      document.getElementById("reason").value = "";
+      document.getElementById("note").value = "";
+    } else {
+      document.getElementById("reasonBox").classList.remove("hidden");
+    }
+  }
+
+
+  /* 14 - LOW WRITE SAVE */
+
+  async function saveCurrentAreaComplete() {
+    showLoading();
+
+    const taskResults = {};
+
+    currentTaskList.forEach(function(task) {
+      taskResults[task.taskId] = {
+        taskId: task.taskId,
+        taskName: task.taskName,
+        status: "Completed",
+        reason: ""
+      };
+    });
+
+    await saveAreaStatus(taskResults);
+    await loadAssignmentTasks();
+
+    hideLoading();
+    drawAreaButtons(selectedCategory);
+    showView(3);
+  }
+
+  async function saveTaskChecklist() {
+    const reasonText = getReasonText();
+    const taskResults = {};
+    let hasIncomplete = false;
+
+    currentTaskList.forEach(function(task, index) {
+      const checked = document.getElementById("task_" + index).dataset.done === "true";
+      const status = checked ? "Completed" : "Incomplete";
+
+      if (!checked) hasIncomplete = true;
+
+      taskResults[task.taskId] = {
+        taskId: task.taskId,
+        taskName: task.taskName,
+        status: status,
+        reason: checked ? "" : reasonText
+      };
+    });
+
+    if (hasIncomplete && reasonText === "") {
+      alert("Select a reason before saving.");
+      return;
+    }
+
+    showLoading();
+
+    await saveAreaStatus(taskResults);
+    await loadAssignmentTasks();
+
+    hideLoading();
+
+    document.getElementById("message").innerText = "SAVED";
+    selectedDehumidifierPeriod = "";
+
+    setTimeout(function() {
+      drawAreaButtons(selectedCategory);
+      showView(3);
+    }, 500);
+  }
+
+  async function saveAreaStatus(taskResults) {
+    const statusSummary = getStatusSummary(taskResults);
+    const statusId = makeStatusId(currentAreaId);
+    const statusRef = doc(db, "task_area_status", statusId);
+
+    const firstTask = currentTaskList[0] || {};
+
+    const statusDoc = {
+      statusId: statusId,
+      workDateISO: currentWorkDateISO,
+      workDate: currentWorkDateDisplay,
+      weekday: currentWorkDayName,
+      employeeId: String(employeeId || ""),
+      employeeName: employeeName,
+      schedule: currentAssignment,
+      modeType: getModeTypeForAssignment(currentAssignment),
+      areaId: currentAreaId,
+      areaName: currentAreaName,
+      category: selectedCategory,
+      floor: firstTask.floor || "",
+      status: statusSummary.status,
+      completedCount: statusSummary.completedCount,
+      incompleteCount: statusSummary.incompleteCount,
+      totalCount: statusSummary.totalCount,
+      tasks: taskResults,
+      updatedAt: serverTimestamp()
+    };
+
+    await setDoc(statusRef, statusDoc, { merge: true });
+
+    const historyId = makeHistoryId(currentAreaId);
+    const historyRef = doc(db, "task_history", historyId);
+
+    await setDoc(historyRef, {
+      historyId: historyId,
+      employeeName: employeeName,
+      mode: getModeTypeForAssignment(currentAssignment),
+      area_id: currentAreaId,
+      area_type: selectedCategory,
+      task_name: "AREA SAVE",
+      status: statusSummary.status,
+      completed_date: currentWorkDateISO,
+      completed_time: getTimeNow(),
+      timestamp: Date.now(),
+      schedule: currentAssignment,
+      floor: firstTask.floor || "",
+      reason: getReasonText(),
+      note: document.getElementById("note").value || "",
+      work_id: statusId,
+      areaName: currentAreaName,
+      completedCount: statusSummary.completedCount,
+      incompleteCount: statusSummary.incompleteCount,
+      totalCount: statusSummary.totalCount,
+      taskResults: Object.keys(taskResults).map(function(key) { return taskResults[key]; }),
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+
+    progressData[currentAreaId] = statusDoc;
+  }
+
+  function getStatusSummary(taskResults) {
+    let completedCount = 0;
+    let incompleteCount = 0;
+    const keys = Object.keys(taskResults);
+
+    keys.forEach(function(key) {
+      if (taskResults[key].status === "Completed") completedCount++;
+      if (taskResults[key].status === "Incomplete") incompleteCount++;
+    });
+
+    return {
+      completedCount: completedCount,
+      incompleteCount: incompleteCount,
+      totalCount: keys.length,
+      status: incompleteCount > 0 ? "Incomplete" : "Completed"
+    };
+  }
+
+  function getReasonText() {
+    const reason = document.getElementById("reason").value || "";
+    const note = document.getElementById("note").value || "";
+
+    if (reason && note) return reason + " - " + note;
+    if (reason) return reason;
+    return note;
+  }
+
+  function makeStatusId(areaId) {
+    return cleanId([
+      currentWorkDateISO,
+      employeeId,
+      currentAssignment,
+      areaId
+    ].join("_"));
+  }
+
+  function makeHistoryId(areaId) {
+    return cleanId([
+      "history",
+      currentWorkDateISO,
+      employeeId,
+      currentAssignment,
+      areaId,
+      Date.now()
+    ].join("_"));
+  }
+
+
+  /* 15 - MODAL */
+
+  function showCustomConfirm(message) {
+    return showCustomModal("Confirm", message, "YES", "CANCEL", true, false);
+  }
+
+  function showCustomChoice(title, message, yesText, noText) {
+    return showCustomModal(title, message, yesText, noText, "save", "tasks");
+  }
+
+  function showCustomModal(title, message, yesText, noText, yesValue, noValue) {
+    const textBox = document.getElementById("customConfirmText");
+
+    document.getElementById("customConfirmTitle").innerText = title;
+    textBox.innerText = message;
+    document.getElementById("customConfirmYesButton").innerText = yesText;
+    document.getElementById("customConfirmNoButton").innerText = noText;
+
+    if (message) textBox.classList.remove("hidden");
+    else textBox.classList.add("hidden");
+
+    customConfirmYesValue = yesValue;
+    customConfirmNoValue = noValue;
+
+    document.getElementById("customConfirmModal").classList.remove("hidden");
+
+    return new Promise(function(resolve) {
+      customConfirmResolve = resolve;
+    });
+  }
+
+  function customConfirmYes() {
+    document.getElementById("customConfirmModal").classList.add("hidden");
+    if (customConfirmResolve) customConfirmResolve(customConfirmYesValue);
+  }
+
+  function customConfirmNo() {
+    document.getElementById("customConfirmModal").classList.add("hidden");
+    if (customConfirmResolve) customConfirmResolve(customConfirmNoValue);
+  }
+
+
+  /* 16 - VIEW HELPERS */
+
+  function showLoading() {
+    document.getElementById("loadingScreen").classList.remove("hidden");
+  }
+
+  function hideLoading() {
+    document.getElementById("loadingScreen").classList.add("hidden");
+  }
+
+  function showView(num) {
+    [2, 3, 4].forEach(function(viewNumber) {
+      document.getElementById("view" + viewNumber).classList.add("hidden");
+    });
+
+    document.getElementById("view" + num).classList.remove("hidden");
+  }
+
+  function backToCategories() {
+    drawCategories();
+    showView(2);
+  }
+
+  function backToAreas() {
+    drawAreaButtons(selectedCategory);
+    showView(3);
+  }
+
+  function logout() {
+    sessionStorage.clear();
+    window.location.href = "index.html";
+  }
+
+
+  /* 17 - UTILITIES */
+
+  function cleanId(value) {
+    return String(value || "")
+      .toLowerCase()
+      .replace(/&/g, "and")
+      .replace(/[^a-z0-9_-]+/g, "_")
+      .replace(/^_+|_+$/g, "")
+      .replace(/_+/g, "_") || "blank";
+  }
+
+  function escapeHtml(value) {
+    return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function getTimeNow() {
+    return new Date().toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit"
+    });
+  }
+
+
+  /* 18 - WINDOW FUNCTIONS */
+
+  window.showCoverScheduleDropdown = showCoverScheduleDropdown;
+  window.changeCoverSchedule = changeCoverSchedule;
+  window.openCalendar = openCalendar;
+  window.changeWorkDateFromCalendar = changeWorkDateFromCalendar;
+  window.changeWorkDateFromBigPicker = changeWorkDateFromBigPicker;
+  window.openAreaChoice = openAreaChoice;
+  window.confirmCheckAllTasks = confirmCheckAllTasks;
+  window.checkAllTasks = checkAllTasks;
+  window.updateChecklistColors = updateChecklistColors;
+  window.updateReasonVisibility = updateReasonVisibility;
+  window.toggleTaskButton = toggleTaskButton;
+  window.saveTaskChecklist = saveTaskChecklist;
+  window.backToCategories = backToCategories;
+  window.backToAreas = backToAreas;
+  window.logout = logout;
+  window.customConfirmYes = customConfirmYes;
+  window.customConfirmNo = customConfirmNo;
+
+</script>
+
+</body>
+</html>
