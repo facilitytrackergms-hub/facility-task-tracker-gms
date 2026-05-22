@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!-- 01 - HEAD -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Task Reports</title>
+
+  <style>
+    /* 02 - GLOBAL STYLE */
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f2f2f2;
+      min-height: 100vh;
+      padding: 10px;
+    }
+
+    .page {
+      width: 100%;
+      max-width: 1100px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 18px;
+      padding: 14px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.18);
+    }
+
+    .view-tag {
+      display: inline-block;
+      background: black;
+      color: white;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+
+    h1, h2, h3 {
+      text-align: center;
+      margin-top: 0;
+    }
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    h2 {
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+
+    label {
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    input, select {
+      width: 100%;
+      font-size: 16px;
+      padding: 9px;
+      margin: 5px 0 9px;
+      border-radius: 10px;
+      border: 1px solid #bbb;
+      background: white;
+    }
+
+    button {
+      width: 100%;
+      border: none;
+      border-radius: 12px;
+      background: #1976d2;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      padding: 11px;
+      margin: 5px 0;
+      cursor: pointer;
+    }
+
+    .green { background: #2e7d32 !important; }
+    .yellow { background: #f9a825 !important; color: black !important; }
+    .red { background: #c62828 !important; }
+    .back { background: #555 !important; }
+
+    .filter-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin: 12px 0;
+    }
+
+    .summary-card {
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 10px;
+      text-align: center;
+      background: #fafafa;
+    }
+
+    .summary-number {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .summary-label {
+      font-size: 12px;
+      font-weight: bold;
+      color: #555;
+    }
+
+    .report-table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      margin-top: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 6px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #efefef;
+      font-weight: bold;
+    }
+
+    .status-completed {
+      color: #2e7d32;
+      font-weight: bold;
+    }
+
+    .status-incomplete {
+      color: #c62828;
+      font-weight: bold;
+    }
+
+    .small-text {
+      font-size: 12px;
+      color: #444;
+      line-height: 1.3;
+    }
+
+    .message {
+      text-align: center;
+      font-size: 16px;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+
+    .loading-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255,255,255,0.72);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 99999;
+    }
+
+    .hidden { display: none !important; }
+
+    .spinner {
+      width: 70px;
+      height: 70px;
+      border: 8px solid #ddd;
+      border-top: 8px solid #1976d2;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .version-label {
+      margin-top: 12px;
+      font-size: 13px;
+      font-weight: bold;
+      color: #777;
+      text-align: center;
+    }
+
+
+    @media (max-width: 760px) {
+      .filter-grid { grid-template-columns: 1fr; }
+      .button-row { grid-template-columns: 1fr; }
+      .summary-grid { grid-template-columns: 1fr 1fr; }
+      h1 { font-size: 24px; }
+    }
+
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+      }
+
+      .page {
+        max-width: none;
+        box-shadow: none;
+        border-radius: 0;
+        padding: 0;
+      }
+
+      .no-print,
+      .view-tag,
+      button,
+      input,
+      select,
+      label {
+        display: none !important;
+      }
+
+      .report-table-wrap {
+        overflow: visible;
+      }
+
+      table {
+        font-size: 10px;
+      }
+
+      th, td {
+        padding: 4px;
+      }
+
+      @page {
+        size: landscape;
+        margin: 0.35in;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="page">
+  <!-- 03 - REPORT HEADER -->
+  <div class="no-print" style="text-align:center;">
+    <div class="view-tag">REPORTS</div>
+  </div>
+
+  <h1>GMS Task Report</h1>
+  <h2 id="printSubtitle">Choose dates and load report</h2>
+
+  <!-- 04 - FILTERS -->
+  <div class="no-print">
+    <div class="filter-grid">
+      <div>
+        <label>From Date</label>
+        <input type="date" id="fromDate">
+      </div>
+
+      <div>
+        <label>To Date</label>
+        <input type="date" id="toDate">
+      </div>
+
+      <div>
+        <label>Status</label>
+        <select id="statusFilter">
+          <option value="">All</option>
+          <option value="Completed">Completed</option>
+          <option value="Incomplete">Incomplete</option>
+          <option value="Open">Open</option>
+          <option value="Needs Follow-Up">Needs Follow-Up</option>
+          <option value="Resolved">Resolved</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Employee</label>
+        <select id="employeeFilter">
+          <option value="">All employees</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Floor</label>
+        <select id="floorFilter">
+          <option value="">All floors</option>
+          <option value="1stfloor">1st Floor</option>
+          <option value="2ndFloor">2nd Floor</option>
+          <option value="3rdFloor">3rd Floor</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Schedule</label>
+        <select id="scheduleFilter">
+          <option value="">All schedules</option>
+          <option>HK1</option>
+          <option>HK2</option>
+          <option>1stfloor</option>
+          <option>2ndFloor</option>
+          <option>3rdFloor</option>
+          <option>Laundry</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Room / Area</label>
+        <input id="areaFilter" placeholder="Example: 117">
+      </div>
+
+      <div>
+        <label>Search</label>
+        <input id="textFilter" placeholder="Reason, note, task, employee">
+      </div>
+
+      <div>
+        <label>Report Type</label>
+        <select id="reportType">
+          <option value="detail">Detailed</option>
+          <option value="issues">Issues Only</option>
+          <option value="summary">Summary Only</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="button-row">
+      <button class="green" onclick="loadReport()">LOAD REPORT</button>
+      <button class="yellow" onclick="printReport()">PRINT</button>
+      <button class="back" onclick="goBackToAdmin()">BACK TO ADMIN</button>
+    </div>
+  </div>
+
+  <!-- 05 - REPORT SUMMARY -->
+  <div id="message" class="message"></div>
+
+  <div id="summaryBox" class="summary-grid hidden"></div>
+
+  <!-- 06 - REPORT TABLE -->
+  <div id="reportTableWrap" class="report-table-wrap hidden">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Employee</th>
+          <th>Schedule</th>
+          <th>Floor</th>
+          <th>Area</th>
+          <th>Category</th>
+          <th>Status</th>
+          <th>Done</th>
+          <th>Issue</th>
+          <th>Reason / Note</th>
+          <th>Tasks</th>
+        </tr>
+      </thead>
+      <tbody id="reportBody"></tbody>
+    </table>
+  </div>
+  <div class="version-label no-print">Updated: 2026-05-22 7:40 PM | reports.html</div>
+</div>
+
+<div id="loadingScreen" class="loading-bg hidden">
+  <div class="spinner"></div>
+</div>
+
+<script type="module">
+  /* 07 - FIREBASE IMPORTS */
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+
+  import {
+    getFirestore,
+    collection,
+    query,
+    where,
+    getDocs
+  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  /* 08 - FIREBASE CONFIG */
+  const firebaseConfig = {
+    apiKey: "AIzaSyBgq_ooBeEN4noEyIxYPLVokgM6RjCO648",
+    authDomain: "gms-task-tracker.firebaseapp.com",
+    projectId: "gms-task-tracker",
+    storageBucket: "gms-task-tracker.firebasestorage.app",
+    messagingSenderId: "790880979860",
+    appId: "1:790880979860:web:6faee2a6e56955af3c1d81",
+    measurementId: "G-5TRHQMS039"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  /* 09 - PAGE STATE */
+  let loadedRows = [];
+  let filteredRows = [];
+
+  const sessionData = JSON.parse(sessionStorage.getItem("currentEmployee"));
+
+  if (!sessionData) {
+    window.location.href = "index.html";
+  }
+
+  setDefaultDates();
+  loadEmployeeOptions();
+
+  /* 10 - DATE SETUP */
+  function getTodayISO() {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    return yyyy + "-" + mm + "-" + dd;
+  }
+
+  function setDefaultDates() {
+    const today = getTodayISO();
+    document.getElementById("fromDate").value = today;
+    document.getElementById("toDate").value = today;
+  }
+
+  /* 11 - LOAD EMPLOYEES */
+  async function loadEmployeeOptions() {
+    try {
+      const snap = await getDocs(collection(db, "employees"));
+      const select = document.getElementById("employeeFilter");
+      const names = [];
+
+      snap.docs.forEach(function(docSnap) {
+        const emp = docSnap.data();
+        const name = ((emp.firstName || "") + " " + (emp.lastName || "")).trim() || emp.name || emp.employeeName || "";
+        if (name && !names.includes(name)) names.push(name);
+      });
+
+      names.sort().forEach(function(name) {
+        const option = document.createElement("option");
+        option.value = name;
+        option.innerText = name;
+        select.appendChild(option);
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  /* 12 - LOAD REPORT */
+  async function loadReport() {
+    const fromDate = document.getElementById("fromDate").value;
+    const toDate = document.getElementById("toDate").value;
+
+    if (!fromDate || !toDate) {
+      showMessage("Choose from date and to date.");
+      return;
+    }
+
+    if (fromDate > toDate) {
+      showMessage("From date cannot be after to date.");
+      return;
+    }
+
+    showLoading();
+
+    try {
+      const taskQuery = query(
+        collection(db, "task_history"),
+        where("completed_date", ">=", fromDate),
+        where("completed_date", "<=", toDate)
+      );
+
+      const issueQuery = query(
+        collection(db, "issue_logs"),
+        where("createdDate", ">=", fromDate),
+        where("createdDate", "<=", toDate)
+      );
+
+      const taskSnap = await getDocs(taskQuery);
+      const issueSnap = await getDocs(issueQuery);
+
+      const roomSettings = await loadReportRoomSettings();
+
+      const taskRows = taskSnap.docs.map(function(docSnap) {
+        const rowData = docSnap.data();
+        const row = normalizeHistoryRow(docSnap.id, rowData);
+        row.roomKey = rowData.roomKey || "";
+        return row;
+      });
+
+      const issueRows = issueSnap.docs.map(function(docSnap) {
+        const rowData = docSnap.data();
+        const row = normalizeIssueRow(docSnap.id, rowData);
+        row.roomKey = rowData.roomKey || "";
+        return row;
+      });
+
+      loadedRows = dedupeOneDoorReportRows(taskRows.concat(issueRows), roomSettings);
+
+      applyFiltersAndDraw();
+    } catch (error) {
+      console.error(error);
+      showMessage("Error loading report. Check Firestore rules or index message.");
+    }
+
+    hideLoading();
+  }
+
+  async function loadReportRoomSettings() {
+    const snap = await getDocs(collection(db, "room_settings"));
+    const settings = {};
+
+    snap.docs.forEach(function(docSnap) {
+      const setting = docSnap.data();
+      const roomKey = getReportRoomKey(setting);
+      const schedule = String(setting.schedule || "");
+
+      if (!roomKey) return;
+
+      if (schedule) {
+        settings[schedule + "|" + roomKey] = setting;
+      }
+
+      if (!settings[roomKey]) {
+        settings[roomKey] = setting;
+      }
+    });
+
+    return settings;
+  }
+
+  function dedupeOneDoorReportRows(rows, roomSettings) {
+    const groups = {};
+    const output = [];
+
+    rows.forEach(function(row) {
+      const category = String(row.area_type || "");
+      const roomKey = getReportRoomKey(row);
+      const isRoomCategory = row.rowType === "Task" && (category === "Weekly Room" || category === "Daily Room");
+
+      if (!isRoomCategory || !roomKey || !row.schedule) {
+        output.push(row);
+        return;
+      }
+
+      const groupKey = row.schedule + "|" + roomKey;
+      if (!groups[groupKey]) {
+        groups[groupKey] = [];
+      }
+
+      groups[groupKey].push(row);
+    });
+
+    Object.keys(groups).forEach(function(groupKey) {
+      const groupRows = groups[groupKey];
+      const weeklyRows = groupRows.filter(function(row) { return row.area_type === "Weekly Room"; });
+      const dailyRows = groupRows.filter(function(row) { return row.area_type === "Daily Room"; });
+      const setting = roomSettings[groupKey] || roomSettings[groupKey.split("|").pop()] || {};
+
+      if (weeklyRows.length > 0) {
+        output.push(weeklyRows[0]);
+
+        if (setting.isDaily === true && dailyRows.length > 0) {
+          output.push(dailyRows[0]);
+        }
+
+        return;
+      }
+
+      if (dailyRows.length > 0) {
+        output.push(dailyRows[0]);
+      }
+    });
+
+    return output;
+  }
+
+  function getReportRoomKey(row) {
+    const value = row.roomKey || row.areaName || row.area_name || row.area_id || row.areaId || "";
+    const text = String(value || "").trim();
+    const numberMatch = text.match(/\d+/);
+
+    if (numberMatch) return numberMatch[0];
+
+    return text.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+  }
+  /* 13 - NORMALIZE DATA */
+  function normalizeHistoryRow(id, row) {
+    return {
+      id: id,
+      rowType: "Task",
+      completed_date: row.completed_date || "",
+      completed_time: row.completed_time || "",
+      employeeName: row.employeeName || row.employee_name || "",
+      schedule: row.schedule || "",
+      floor: row.floor || "",
+      areaName: row.areaName || row.area_name || row.area_id || "",
+      area_id: row.area_id || "",
+      area_type: row.area_type || row.category || "",
+      status: row.status || "",
+      reason: row.reason || "",
+      note: row.note || "",
+      completedCount: Number(row.completedCount || 0),
+      incompleteCount: Number(row.incompleteCount || 0),
+      totalCount: Number(row.totalCount || 0),
+      taskResults: Array.isArray(row.taskResults) ? row.taskResults : []
+    };
+  }
+
+  function normalizeIssueRow(id, row) {
+    return {
+      id: id,
+      rowType: "Issue",
+      completed_date: row.createdDate || row.workDateISO || "",
+      completed_time: row.createdTime || "",
+      employeeName: row.employeeName || "",
+      schedule: row.schedule || "",
+      floor: row.floor || "",
+      areaName: row.areaName || "",
+      area_id: row.areaId || "",
+      area_type: row.category || "",
+      status: row.status || "Open",
+      reason: row.issueReason || "",
+      note: row.issueNote || row.followUpNote || "",
+      completedCount: 0,
+      incompleteCount: 1,
+      totalCount: 1,
+      issueId: row.issueId || id,
+      needsFollowUp: row.needsFollowUp === true,
+      followUpNote: row.followUpNote || "",
+      resolvedBy: row.resolvedBy || "",
+      resolvedDate: row.resolvedDate || "",
+      photoCount: Number(row.photoCount || 0),
+      taskResults: [{
+        taskName: row.taskName || "",
+        status: "Incomplete"
+      }]
+    };
+  }
+
+  /* 14 - FILTER AND DRAW */
+  function applyFiltersAndDraw() {
+    const employee = document.getElementById("employeeFilter").value.toLowerCase();
+    const floor = document.getElementById("floorFilter").value.toLowerCase();
+    const schedule = document.getElementById("scheduleFilter").value.toLowerCase();
+    const status = document.getElementById("statusFilter").value.toLowerCase();
+    const area = document.getElementById("areaFilter").value.toLowerCase().trim();
+    const text = document.getElementById("textFilter").value.toLowerCase().trim();
+    const reportType = document.getElementById("reportType").value;
+
+    filteredRows = loadedRows.filter(function(row) {
+      if (reportType === "detail" && row.rowType !== "Task") return false;
+      if (reportType === "issues" && row.rowType !== "Issue" && String(row.status || "").toLowerCase() !== "incomplete") return false;
+      if (reportType === "summary" && row.rowType !== "Task") return false;
+
+      if (employee && String(row.employeeName || "").toLowerCase() !== employee) return false;
+      if (floor && String(row.floor || "").toLowerCase() !== floor) return false;
+      if (schedule && String(row.schedule || "").toLowerCase() !== schedule) return false;
+      if (status && String(row.status || "").toLowerCase() !== status) return false;
+
+      if (area) {
+        const areaText = (String(row.areaName || "") + " " + String(row.area_id || "")).toLowerCase();
+        if (!areaText.includes(area)) return false;
+      }
+
+      if (text) {
+        const taskText = row.taskResults.map(function(task) { return task.taskName || ""; }).join(" ");
+        const fullText = [
+          row.rowType,
+          row.issueId,
+          row.employeeName,
+          row.schedule,
+          row.floor,
+          row.areaName,
+          row.area_type,
+          row.status,
+          row.reason,
+          row.note,
+          row.followUpNote,
+          row.resolvedBy,
+          taskText
+        ].join(" ").toLowerCase();
+
+        if (!fullText.includes(text)) return false;
+      }
+
+      return true;
+    });
+
+    filteredRows.sort(function(a, b) {
+      const dateA = String(a.completed_date || "") + " " + String(a.completed_time || "");
+      const dateB = String(b.completed_date || "") + " " + String(b.completed_time || "");
+      return dateA.localeCompare(dateB);
+    });
+
+    drawSummary();
+    drawTable(reportType);
+    updateSubtitle();
+  }
+
+  /* 15 - DRAW SUMMARY */
+  function drawSummary() {
+    const box = document.getElementById("summaryBox");
+    box.innerHTML = "";
+
+    const taskRows = filteredRows.filter(function(row) { return row.rowType === "Task"; });
+    const issueRows = filteredRows.filter(function(row) { return row.rowType === "Issue"; });
+
+    const total = filteredRows.length;
+    const completed = taskRows.filter(function(row) { return row.status === "Completed"; }).length;
+    const incomplete = taskRows.filter(function(row) { return row.status === "Incomplete"; }).length;
+    const openIssues = issueRows.filter(function(row) { return String(row.status || "").toLowerCase() === "open"; }).length;
+    const resolvedIssues = issueRows.filter(function(row) { return String(row.status || "").toLowerCase() === "resolved"; }).length;
+
+    addSummaryCard(box, total, "Records");
+    addSummaryCard(box, completed, "Completed Areas");
+    addSummaryCard(box, incomplete, "Task Issues");
+    addSummaryCard(box, openIssues, "Open Issues");
+    addSummaryCard(box, resolvedIssues, "Resolved Issues");
+
+    box.classList.remove("hidden");
+  }
+
+  function addSummaryCard(box, number, label) {
+    const card = document.createElement("div");
+    card.className = "summary-card";
+    card.innerHTML =
+      '<div class="summary-number">' + escapeHtml(number) + '</div>' +
+      '<div class="summary-label">' + escapeHtml(label) + '</div>';
+    box.appendChild(card);
+  }
+
+  /* 16 - DRAW TABLE */
+  function drawTable(reportType) {
+    const wrap = document.getElementById("reportTableWrap");
+    const body = document.getElementById("reportBody");
+    body.innerHTML = "";
+
+    if (filteredRows.length === 0) {
+      wrap.classList.add("hidden");
+      showMessage("No report records found.");
+      return;
+    }
+
+    showMessage("Records found: " + filteredRows.length);
+
+    if (reportType === "summary") {
+      wrap.classList.add("hidden");
+      return;
+    }
+
+    filteredRows.forEach(function(row) {
+      const tr = document.createElement("tr");
+      const taskList = buildTaskList(row);
+      const reasonText = buildReasonText(row);
+      const statusClass = row.status === "Completed" || row.status === "Resolved" ? "status-completed" : "status-incomplete";
+
+      tr.innerHTML =
+        '<td>' + escapeHtml(row.completed_date) + '</td>' +
+        '<td>' + escapeHtml(row.completed_time) + '</td>' +
+        '<td>' + escapeHtml(row.employeeName) + '</td>' +
+        '<td>' + escapeHtml(row.schedule) + '</td>' +
+        '<td>' + escapeHtml(formatFloor(row.floor)) + '</td>' +
+        '<td>' + escapeHtml(row.areaName) + '</td>' +
+        '<td>' + escapeHtml(row.area_type) + '</td>' +
+        '<td class="' + statusClass + '">' + escapeHtml(row.status) + '</td>' +
+        '<td>' + escapeHtml(row.completedCount + '/' + row.totalCount) + '</td>' +
+        '<td>' + escapeHtml(getIssueCountText(row)) + '</td>' +
+        '<td class="small-text">' + escapeHtml(reasonText) + '</td>' +
+        '<td class="small-text">' + taskList + '</td>';
+
+      body.appendChild(tr);
+    });
+
+    wrap.classList.remove("hidden");
+  }
+
+  function buildTaskList(row) {
+    if (!row.taskResults.length) return "";
+
+    return row.taskResults.map(function(task) {
+      const label = (task.status === "Completed" ? "✓ " : "✕ ") + (task.taskName || "Task");
+      return escapeHtml(label);
+    }).join("<br>");
+  }
+
+  function buildReasonText(row) {
+    const parts = [];
+
+    if (row.rowType === "Issue") {
+      if (row.issueId) parts.push("Issue: " + row.issueId);
+      if (row.reason) parts.push(row.reason);
+      if (row.note) parts.push(row.note);
+      if (row.needsFollowUp) parts.push("Needs follow-up");
+      if (row.followUpNote) parts.push("Follow-up: " + row.followUpNote);
+      if (row.resolvedBy) parts.push("Resolved by: " + row.resolvedBy);
+      if (row.resolvedDate) parts.push("Resolved date: " + row.resolvedDate);
+      return parts.join(" | ");
+    }
+
+    return [row.reason, row.note].filter(Boolean).join(" - ");
+  }
+
+  function getIssueCountText(row) {
+    if (row.rowType === "Issue") {
+      return "1" + (row.photoCount ? " / " + row.photoCount + " photos" : "");
+    }
+
+    return row.incompleteCount;
+  }
+
+  /* 17 - HELPERS */
+  function formatFloor(floor) {
+    if (floor === "1stfloor") return "1st Floor";
+    if (floor === "2ndFloor") return "2nd Floor";
+    if (floor === "3rdFloor") return "3rd Floor";
+    return floor || "";
+  }
+
+  function updateSubtitle() {
+    const fromDate = document.getElementById("fromDate").value;
+    const toDate = document.getElementById("toDate").value;
+    const employee = document.getElementById("employeeFilter").value || "All Employees";
+    const status = document.getElementById("statusFilter").value || "All Status";
+    const reportType = document.getElementById("reportType").value;
+    const label = reportType === "issues" ? "Issues" : reportType === "summary" ? "Summary" : "Detailed";
+    document.getElementById("printSubtitle").innerText = label + " | " + fromDate + " to " + toDate + " | " + employee + " | " + status;
+  }
+
+  function showMessage(message) {
+    document.getElementById("message").innerText = message;
+  }
+
+  function showLoading() {
+    document.getElementById("loadingScreen").classList.remove("hidden");
+  }
+
+  function hideLoading() {
+    document.getElementById("loadingScreen").classList.add("hidden");
+  }
+
+  function printReport() {
+    window.print();
+  }
+
+  function goBackToAdmin() {
+    window.location.href = "admin/admin.html";
+  }
+
+  function escapeHtml(value) {
+    return String(value === undefined || value === null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  /* 18 - WINDOW FUNCTIONS */
+  window.loadReport = loadReport;
+  window.printReport = printReport;
+  window.goBackToAdmin = goBackToAdmin;
+</script>
+
+</body>
+</html>
