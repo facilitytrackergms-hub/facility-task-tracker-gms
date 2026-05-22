@@ -1,0 +1,30 @@
+name: Fix schedule editor back
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/fix-schedule-editor-back.yml']
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('admin/admin.js')
+          text = p.read_text()
+          marker = '  window.logout = logout;'
+          add = '  window.backToScheduleEditorList = backToScheduleEditorList;\n  window.exitScheduleEditorToAdmin = exitScheduleEditorToAdmin;\n\n'
+          if 'window.backToScheduleEditorList' not in text:
+              text = text.replace(marker, add + marker)
+              p.write_text(text)
+          PY
+      - run: |
+          git config user.name ChatGPT
+          git config user.email chatgpt@users.noreply.github.com
+          git add admin/admin.js
+          git commit -m "Fix schedule editor back buttons" || exit 0
+          git push
