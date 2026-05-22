@@ -982,15 +982,15 @@ if (waterTemperatureFloorFilter === "3") {
         return location.locationName;
       });
 
-    if (usedLabel) {
-      if (!waterTemperatureSummaryOnly && usedRooms.length > 0) {
-        usedLabel.classList.remove("hidden");
-        usedLabel.innerText = "Rooms used last week: " + usedRooms.join(", ");
-      } else {
-        usedLabel.classList.add("hidden");
-        usedLabel.innerText = "";
-      }
-    }  
+if (usedLabel) {
+  if (!waterTemperatureSummaryOnly && usedRooms.length > 0) {
+    usedLabel.classList.remove("hidden");
+    usedLabel.innerText = usedRooms.join(", ");
+  } else {
+    usedLabel.classList.add("hidden");
+    usedLabel.innerText = "";
+  }
+}
     
 
 if (waterTemperatureSummaryOnly) {
