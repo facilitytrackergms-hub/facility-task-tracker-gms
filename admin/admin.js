@@ -10888,4 +10888,7 @@ window.setWaterTemperatureFloorFilter = setWaterTemperatureFloorFilter;
   window.cancelRoomSafeAddRoom = cancelRoomSafeAddRoom;
   window.saveRoomSafeAddedRoom = saveRoomSafeAddedRoom;
 
+  window.backToScheduleEditorList = backToScheduleEditorList;
+  window.exitScheduleEditorToAdmin = exitScheduleEditorToAdmin;
+
   window.logout = logout;
