@@ -346,6 +346,7 @@
   }
 
   function backToScheduleEditorList() {
+    currentAssignment = "";
     selectedCategory = "";
     updateScheduleChoiceTitle();
     drawAdminAssignmentButtons();
@@ -354,8 +355,10 @@
 
   function exitScheduleEditorToAdmin() {
     adminScheduleEditorFlowActive = false;
+    currentAssignment = "";
     selectedCategory = "";
     drawAdminCategories();
+    drawAdminAssignmentButtons();
     showAdminView("adminView2");
   }
 
