@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Work History</title>
+  <style>
+    /* 01 - GLOBAL STYLE */
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 20px; font-family: Arial, sans-serif; background: #eef2f7; }
+    
+    .card { 
+      background: white; 
+      border-radius: 20px; 
+      padding: 25px; 
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
+      position: relative;
+    }
+
+    .view-label { 
+      position: absolute; 
+      top: 15px; 
+      right: 20px; 
+      font-weight: bold; 
+      color: #1847d1; 
+      font-size: 13px; 
+    }
+
+    h2 { color: #1847d1; margin-top: 0; text-align: center; }
+    
+    /* 02 - LOG ITEM STYLE */
+    .log-item { padding: 15px; border-bottom: 1px solid #eee; }
+    .log-item:last-child { border-bottom: none; }
+    .time { color: #666; font-size: 13px; margin-top: 4px; }
+    .emp-name { font-weight: bold; color: #1847d1; font-size: 16px; }
+    .area-badge { background: #e8f0fe; color: #1976d2; padding: 2px 8px; border-radius: 5px; font-size: 14px; font-weight: bold; }
+
+    /* 03 - ACTION BUTTON */
+    .back-btn { 
+      margin-top: 20px; 
+      width: 100%; 
+      padding: 15px; 
+      border-radius: 10px; 
+      border: none; 
+      background: #5a5a5a; 
+      color: white; 
+      font-weight: bold; 
+      cursor: pointer;
+    }
+
+    .version-label {
+      margin-top: 12px;
+      font-size: 13px;
+      font-weight: bold;
+      color: #777;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <div class="view-label">V6 logs.html</div>
+    <h2>Recent Activity</h2>
+    <div id="logContainer">Loading logs...</div>
+    <button class="back-btn" onclick="window.location.href='schedule.html'">BACK TO SCHEDULE</button>
+    <div class="version-label">Updated: 2026-05-22 7:43 PM | history.html</div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBgq_ooBeEN4noEyIxYPLVokgM6RjCO648",
+      authDomain: "gms-task-tracker.firebaseapp.com",
+      projectId: "gms-task-tracker",
+      storageBucket: "gms-task-tracker.firebasestorage.app",
+      messagingSenderId: "790880979860",
+      appId: "1:790880979860:web:6faee2a6e56955af3c1d81"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    async function loadLogs() {
+      // Pull last 20 completions
+      const q = query(collection(db, "logs"), orderBy("timestamp", "desc"), limit(20));
+      const snap = await getDocs(q);
+      const container = document.getElementById("logContainer");
+      container.innerHTML = "";
+      
+      snap.forEach(doc => {
+        const data = doc.data();
+        
+        // Format the date/time nicely
+        const dateObj = data.timestamp ? data.timestamp.toDate() : null;
+        const timeStr = dateObj ? dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "";
+        const dayStr = dateObj ? dateObj.toLocaleDateString([], {month: 'short', day: 'numeric'}) : "N/A";
+
+        container.innerHTML += `
+          <div class="log-item">
+            <div class="emp-name">${data.employeeName || "Unknown Staff"}</div>
+            <div style="margin-top: 5px;">Finished <span class="area-badge">${data.areaName || data.area || "Unknown Area"}</span></div>
+            <div class="time">${dayStr} at ${timeStr}</div>
+          </div>`;
+      });
+
+      if (snap.empty) {
+        container.innerHTML = "<div style='text-align:center; padding:20px; color:#666;'>No work has been logged yet.</div>";
+      }
+    }
+
+    loadLogs();
+  </script>
+</body>
+</html>
