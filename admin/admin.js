@@ -2,7 +2,7 @@
    01 - ADMIN.JS SAFE LOCAL BUILD
 ========================== */
 
-const ADMIN_VERSION_LABEL = "Updated: 2026-05-22 11:15 PM | admin.js";
+const ADMIN_VERSION_LABEL = "Updated: 2026-05-22 11:21 PM | admin.js";
 
 /* =========================
    02 - LOCAL DATA
@@ -516,7 +516,7 @@ Object.assign(window, {
 
 document.addEventListener("DOMContentLoaded", function() {
   document.querySelectorAll(".app-version-label").forEach(function(el) {
-    if (el.innerText.includes("admin.html")) el.innerText = "Updated: 2026-05-22 11:15 PM | admin.html";
+    if (el.innerText.includes("admin.html")) el.innerText = "Updated: 2026-05-22 11:21 PM | admin.html";
   });
   const mode = localStorage.getItem("adminHousekeepingMode") || "two";
   setActiveButton("modeTwoButton", mode === "two");
