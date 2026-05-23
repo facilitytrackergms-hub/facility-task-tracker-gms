@@ -2,7 +2,7 @@
    11 - ADMIN CORE LOADER
 ========================== */
 
-const ADMIN_CORE_SCRIPT = "https://cdn.jsdelivr.net/gh/facilitytrackergms-hub/facility-task-tracker-gms@549ffacee888442cf8157ffee64ee270cf8deeed/admin/admin.js";
+const ADMIN_CORE_SCRIPT = "https://cdn.jsdelivr.net/gh/facilitytrackergms-hub/facility-task-tracker-gms@3d40f422992c269dff7428c8db915c3e56c2b362/admin/admin.js";
 
 await import(ADMIN_CORE_SCRIPT);
 
@@ -11,7 +11,7 @@ await import(ADMIN_CORE_SCRIPT);
 ========================== */
 
 (function patchMainDoorCompactSelector() {
-  const PATCH_VERSION = "Updated: 2026-05-22 10:18 PM | admin.js";
+  const PATCH_VERSION = "Updated: 2026-05-22 10:24 PM | admin.js";
 
   function addCompactStyle() {
     if (document.getElementById("mainDoorCompactSelectorStyle")) return;
