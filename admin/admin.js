@@ -11,7 +11,7 @@ await import(ADMIN_CORE_SCRIPT);
 ========================== */
 
 (function patchQuickToolsFloorCommonAreaFilter() {
-  const QUICK_TOOLS_PATCH_VERSION = "Updated: 2026-05-22 8:31 PM | admin.js";
+  const QUICK_TOOLS_PATCH_VERSION = "Updated: 2026-05-22 8:35 PM | admin.js";
   const FIRESTORE_REST_API_KEY = "AIzaSyBgq_ooBeEN4noEyIxYPLVokgM6RjCO648";
   const AREAS_REST_URL = "https://firestore.googleapis.com/v1/projects/gms-task-tracker/databases/(default)/documents/areas";
 
@@ -108,7 +108,7 @@ await import(ADMIN_CORE_SCRIPT);
 
     if (!areaName) return false;
     if (/^\d{3,4}$/.test(areaName)) return false;
-    if (category && category !== "common area") return false;
+    if (category && !["common area", "common areas"].includes(category)) return false;
 
     return area.active !== false && area.active !== "No";
   }
