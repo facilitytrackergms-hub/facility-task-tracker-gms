@@ -7,18 +7,20 @@ const ADMIN_CORE_SCRIPT = "https://cdn.jsdelivr.net/gh/facilitytrackergms-hub/fa
 await import(ADMIN_CORE_SCRIPT);
 
 /* =========================
-   43C - MAIN DOOR FILTER
+   43C - MAIN DOOR PATCHES
 ========================== */
 
-(function patchQuickToolsFloorCommonAreaFilter() {
-  const QUICK_TOOLS_PATCH_VERSION = "Updated: 2026-05-22 9:23 PM | admin.js";
+(function patchMainDoorFlow() {
+  const PATCH_VERSION = "Updated: 2026-05-22 9:31 PM | admin.js";
   const FIRESTORE_REST_API_KEY = "AIzaSyBgq_ooBeEN4noEyIxYPLVokgM6RjCO648";
   const AREAS_REST_URL = "https://firestore.googleapis.com/v1/projects/gms-task-tracker/databases/(default)/documents/areas";
+  const FILTER_STORAGE_KEY = "mainDoorFilterState";
 
-  const quickToolsFilterState = {
-    floor: "1",
+  const defaultFilterState = {
+    schedule: "All",
     type: "rooms",
-    commonAreaRecords: []
+    floor: "1",
+    weekday: "All"
   };
 
   const floorAssignments = {
@@ -27,19 +29,61 @@ await import(ADMIN_CORE_SCRIPT);
     "3": "3rdFloor"
   };
 
-  function updateQuickToolsMainDoorLabels() {
-    const viewTitle = document.querySelector("#adminQuickToolsView .admin-dashboard-title");
-    if (viewTitle) viewTitle.innerText = "Main Door";
+  const schedules = [
+    { key: "All", label: "ALL" },
+    { key: "HK1", label: "HK1" },
+    { key: "HK2", label: "HK2" },
+    { key: "1stfloor", label: "1ST" },
+    { key: "2ndFloor", label: "2ND" },
+    { key: "3rdFloor", label: "3RD" },
+    { key: "Laundry", label: "LAUNDRY" }
+  ];
 
-    document.querySelectorAll("button").forEach(function(button) {
-      const text = String(button.innerText || "").trim();
-      if (text === "Room / Area Quick Tools" || text === "Quick Tools" || text.includes("Quick Tools")) {
-        button.innerText = "Main Door";
-      }
-    });
+  const weekdays = [
+    { key: "All", label: "ALL" },
+    { key: "Monday", label: "MON" },
+    { key: "Tuesday", label: "TUE" },
+    { key: "Wednesday", label: "WED" },
+    { key: "Thursday", label: "THU" },
+    { key: "Friday", label: "FRI" },
+    { key: "Saturday", label: "SAT" },
+    { key: "Sunday", label: "SUN" }
+  ];
+
+  const originalOpenQuickToolsView = window.openQuickToolsView;
+  const originalSetQuickToolsFloor = window.setQuickToolsFloor;
+  const originalHandleQuickToolsRoomSearch = window.handleQuickToolsRoomSearch;
+
+  let commonAreaRecords = [];
+  let roomRecords = [];
+  let areasLoaded = false;
+  let loadingAreasPromise = null;
+
+  function loadFilterState() {
+    try {
+      return Object.assign({}, defaultFilterState, JSON.parse(sessionStorage.getItem(FILTER_STORAGE_KEY) || "{}"));
+    } catch (error) {
+      return Object.assign({}, defaultFilterState);
+    }
   }
 
-  function escapeQuickToolsHtml(value) {
+  function saveFilterState() {
+    window.mainDoorFilterState = Object.assign({}, defaultFilterState, window.mainDoorFilterState || {});
+    sessionStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(window.mainDoorFilterState));
+  }
+
+  function setFilterState(key, value) {
+    window.mainDoorFilterState = Object.assign({}, defaultFilterState, window.mainDoorFilterState || {});
+    window.mainDoorFilterState[key] = value;
+    saveFilterState();
+  }
+
+  function getFilterState() {
+    window.mainDoorFilterState = Object.assign({}, defaultFilterState, window.mainDoorFilterState || loadFilterState());
+    return window.mainDoorFilterState;
+  }
+
+  function escapeMainDoorHtml(value) {
     return String(value || "")
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
@@ -48,7 +92,7 @@ await import(ADMIN_CORE_SCRIPT);
       .replace(/'/g, "&#039;");
   }
 
-  function makeQuickToolsKey(value) {
+  function makeMainDoorKey(value) {
     return String(value || "")
       .trim()
       .toLowerCase()
@@ -56,6 +100,10 @@ await import(ADMIN_CORE_SCRIPT);
       .replace(/[^a-z0-9]+/g, "_")
       .replace(/^_+|_+$/g, "")
       .replace(/_+/g, "_") || "blank";
+  }
+
+  function getRoomKey(value) {
+    return String(value || "").replace(/\D/g, "").slice(0, 4);
   }
 
   function readFirestoreValue(value) {
@@ -68,64 +116,64 @@ await import(ADMIN_CORE_SCRIPT);
     return "";
   }
 
-  function getQuickToolsFloorNumberFromAssignment(assignment) {
-    const text = String(assignment || "").trim().toLowerCase();
-    const cleanAssignment = text.replace(/[^a-z0-9]+/g, "");
+  function getFloorNumberFromAssignment(value) {
+    const text = String(value || "").trim().toLowerCase();
+    const clean = text.replace(/[^a-z0-9]+/g, "");
 
-    if (!cleanAssignment) return "";
-
-    if (["1", "1stfloor", "1floor", "floor1", "firstfloor", "first"].includes(cleanAssignment)) return "1";
-    if (["2", "2ndfloor", "2floor", "floor2", "secondfloor", "second"].includes(cleanAssignment)) return "2";
-    if (["3", "3rdfloor", "3floor", "floor3", "thirdfloor", "third"].includes(cleanAssignment)) return "3";
-
-    if (/\b1(st)?\b/.test(text) || text.includes("first")) return "1";
-    if (/\b2(nd)?\b/.test(text) || text.includes("second")) return "2";
-    if (/\b3(rd)?\b/.test(text) || text.includes("third")) return "3";
+    if (!clean) return "";
+    if (["1", "1stfloor", "1floor", "floor1", "firstfloor", "first"].includes(clean)) return "1";
+    if (["2", "2ndfloor", "2floor", "floor2", "secondfloor", "second"].includes(clean)) return "2";
+    if (["3", "3rdfloor", "3floor", "floor3", "thirdfloor", "third"].includes(clean)) return "3";
+    if (/^1/.test(clean)) return "1";
+    if (/^2/.test(clean)) return "2";
+    if (/^3/.test(clean)) return "3";
 
     return "";
   }
 
-  function normalizeQuickToolsCommonArea(areaDoc) {
-    const area = areaDoc || {};
+  function getAreaAssignment(area) {
+    return String(area.schedule || area.assignment || area.assignedTo || "").trim();
+  }
+
+  function getAreaDay(area) {
+    return String(area.scheduleDay || area.day || "daily").trim() || "daily";
+  }
+
+  function getAreaFloor(area) {
+    const roomFloor = getRoomKey(area.areaName).slice(0, 1);
+    if (["1", "2", "3"].includes(roomFloor)) return roomFloor;
+
+    return getFloorNumberFromAssignment(area.floor) ||
+      getFloorNumberFromAssignment(area.floorName) ||
+      getFloorNumberFromAssignment(area.floorNumber) ||
+      getFloorNumberFromAssignment(getAreaAssignment(area));
+  }
+
+  function normalizeAreaDocument(documentItem) {
+    const fields = documentItem && documentItem.fields ? documentItem.fields : {};
+    const area = {
+      id: String(documentItem && documentItem.name ? documentItem.name : "").split("/").pop()
+    };
+
+    Object.keys(fields).forEach(function(key) {
+      area[key] = readFirestoreValue(fields[key]);
+    });
+
     area.areaName = area.areaName || area.area || area.name || "";
     area.category = area.category || "";
     area.scheduleDay = area.scheduleDay || area.day || "daily";
     area.day = area.day || area.scheduleDay;
     area.schedule = area.schedule || area.assignment || area.assignedTo || "";
-    area.floor = area.floor || area.floorName || area.floorNumber || floorAssignments[getQuickToolsFloorNumberFromAssignment(area.schedule)] || "";
+    area.floor = area.floor || area.floorName || area.floorNumber || floorAssignments[getFloorNumberFromAssignment(area.schedule)] || getAreaFloor(area) || "";
+
     return area;
   }
 
-  function normalizeQuickToolsFirestoreDocument(documentItem) {
-    const fields = documentItem && documentItem.fields ? documentItem.fields : {};
-    const output = {
-      id: String(documentItem && documentItem.name ? documentItem.name : "").split("/").pop()
-    };
-
-    Object.keys(fields).forEach(function(key) {
-      output[key] = readFirestoreValue(fields[key]);
-    });
-
-    return normalizeQuickToolsCommonArea(output);
+  function isActiveArea(area) {
+    return area.active !== false && area.active !== "No";
   }
 
-  function getQuickToolsCommonAreaFloor(area) {
-    return getQuickToolsFloorNumberFromAssignment(area.floor) ||
-      getQuickToolsFloorNumberFromAssignment(area.floorName) ||
-      getQuickToolsFloorNumberFromAssignment(area.floorNumber) ||
-      getQuickToolsFloorNumberFromAssignment(area.schedule) ||
-      getQuickToolsFloorNumberFromAssignment(area.assignment) ||
-      getQuickToolsFloorNumberFromAssignment(area.assignedTo);
-  }
-
-  function getQuickToolsCommonAreaAssignment(area) {
-    return String(area && area.schedule ? area.schedule : "").trim() ||
-      String(area && area.assignment ? area.assignment : "").trim() ||
-      floorAssignments[String(quickToolsFilterState.floor || "1")] ||
-      "1stfloor";
-  }
-
-  function isQuickToolsCommonArea(area) {
+  function isCommonArea(area) {
     const areaName = String(area.areaName || "").trim();
     const category = String(area.category || "").trim().toLowerCase();
 
@@ -133,122 +181,72 @@ await import(ADMIN_CORE_SCRIPT);
     if (/^\d{3,4}$/.test(areaName)) return false;
     if (category && !["common area", "common areas"].includes(category)) return false;
 
-    return area.active !== false && area.active !== "No";
+    return isActiveArea(area);
   }
 
-  async function loadQuickToolsCommonAreas() {
-    if (quickToolsFilterState.commonAreaRecords.length > 0) {
-      return quickToolsFilterState.commonAreaRecords;
-    }
+  function isRoomArea(area) {
+    const roomKey = getRoomKey(area.areaName);
+    const category = String(area.category || "").trim();
 
-    let url = AREAS_REST_URL + "?pageSize=300&key=" + encodeURIComponent(FIRESTORE_REST_API_KEY);
-    const records = [];
+    if (!/^\d{3,4}$/.test(roomKey)) return false;
+    if (["Weekly Room", "Daily Room", "Dehumidifier"].includes(category)) return isActiveArea(area);
 
-    while (url) {
-      const response = await fetch(url, { cache: "no-store" });
-      if (!response.ok) {
-        throw new Error("Could not load common areas.");
-      }
-
-      const data = await response.json();
-      (data.documents || []).forEach(function(documentItem) {
-        records.push(normalizeQuickToolsFirestoreDocument(documentItem));
-      });
-
-      url = data.nextPageToken
-        ? AREAS_REST_URL + "?pageSize=300&pageToken=" + encodeURIComponent(data.nextPageToken) + "&key=" + encodeURIComponent(FIRESTORE_REST_API_KEY)
-        : "";
-    }
-
-    quickToolsFilterState.commonAreaRecords = records.filter(isQuickToolsCommonArea);
-
-    return quickToolsFilterState.commonAreaRecords;
+    return false;
   }
 
-  function getQuickToolsUniqueCommonAreasForFloor() {
-    const selectedFloor = String(quickToolsFilterState.floor || "1");
-    const groups = {};
+  async function loadMainDoorAreas() {
+    if (areasLoaded) return;
+    if (loadingAreasPromise) return loadingAreasPromise;
 
-    quickToolsFilterState.commonAreaRecords.forEach(function(area) {
-      const areaName = String(area.areaName || "").trim();
-      const groupKey = makeQuickToolsKey(areaName);
-      const areaFloor = getQuickToolsCommonAreaFloor(area);
+    loadingAreasPromise = (async function() {
+      let url = AREAS_REST_URL + "?pageSize=500&key=" + encodeURIComponent(FIRESTORE_REST_API_KEY);
+      const allRecords = [];
 
-      if (!groups[groupKey]) {
-        groups[groupKey] = {
-          areaName: areaName,
-          areas: [],
-          floorAreas: []
-        };
+      while (url) {
+        const response = await fetch(url, { cache: "no-store" });
+        if (!response.ok) throw new Error("Could not load Main Door rooms.");
+
+        const data = await response.json();
+        (data.documents || []).forEach(function(documentItem) {
+          allRecords.push(normalizeAreaDocument(documentItem));
+        });
+
+        url = data.nextPageToken
+          ? AREAS_REST_URL + "?pageSize=500&pageToken=" + encodeURIComponent(data.nextPageToken) + "&key=" + encodeURIComponent(FIRESTORE_REST_API_KEY)
+          : "";
       }
 
-      groups[groupKey].areas.push(area);
-      if (areaFloor === selectedFloor) {
-        groups[groupKey].floorAreas.push(area);
+      commonAreaRecords = allRecords.filter(isCommonArea);
+      roomRecords = allRecords.filter(isRoomArea);
+      areasLoaded = true;
+    })();
+
+    return loadingAreasPromise;
+  }
+
+  function updateMainDoorLabels() {
+    const viewTitle = document.querySelector("#adminQuickToolsView .admin-dashboard-title");
+    if (viewTitle) viewTitle.innerText = "Main Door";
+
+    document.querySelectorAll("button").forEach(function(button) {
+      const text = String(button.innerText || "").trim();
+      if (text === "Room / Area Quick Tools" || text === "Quick Tools" || text.includes("Quick Tools")) {
+        button.innerText = "Main Door";
       }
-    });
-
-    return Object.keys(groups).filter(function(groupKey) {
-      return groups[groupKey].floorAreas.length > 0;
-    }).map(function(groupKey) {
-      const group = groups[groupKey];
-      const preferredSchedule = floorAssignments[selectedFloor];
-      const representative = group.floorAreas.find(function(area) {
-        return String(area.schedule || "") === preferredSchedule;
-      }) || group.floorAreas[0] || group.areas[0];
-
-      return {
-        areaName: group.areaName,
-        area: representative
-      };
-    }).sort(function(a, b) {
-      return String(a.areaName || "").localeCompare(String(b.areaName || ""), undefined, { numeric: true });
     });
   }
 
-  function updateQuickToolsFilterButtons() {
-    ensureQuickToolsTypeControls();
-    updateQuickToolsMainDoorLabels();
-
-    ["1", "2", "3"].forEach(function(floor) {
-      const btn = document.getElementById("quickToolsFloor" + floor + "Button");
-      if (btn) btn.classList.toggle("active-quick-floor", quickToolsFilterState.floor === floor);
-    });
-
-    const roomsButton = document.getElementById("quickToolsRoomsButton");
-    const commonAreasButton = document.getElementById("quickToolsCommonAreasButton");
-    const oldAreasButton = document.getElementById("quickToolsAreasButton");
-    const showingCommonAreas = quickToolsFilterState.type === "commonAreas";
-
-    if (roomsButton) roomsButton.classList.toggle("active-quick-floor", !showingCommonAreas);
-    if (commonAreasButton) commonAreasButton.classList.toggle("active-quick-floor", showingCommonAreas);
-    if (oldAreasButton) oldAreasButton.classList.toggle("active-quick-floor", showingCommonAreas);
-
-    const roomSearchBox = document.getElementById("quickToolsRoomSearchBox");
-    const areaSearchBox = document.getElementById("quickToolsAreaSearchBox");
-    const roomButtons = document.getElementById("quickToolsRoomButtons");
-    const areaButtons = document.getElementById("quickToolsAreaButtons");
-
-    if (roomSearchBox) roomSearchBox.classList.toggle("hidden", showingCommonAreas);
-    if (areaSearchBox) areaSearchBox.classList.toggle("hidden", !showingCommonAreas);
-    if (roomButtons) roomButtons.classList.toggle("hidden", showingCommonAreas);
-    if (areaButtons) areaButtons.classList.toggle("hidden", !showingCommonAreas);
-  }
-
-  function updateQuickToolsVersionLabel() {
+  function updateVersionLabel() {
     const view = document.getElementById("adminQuickToolsView");
     if (!view) return;
 
     const label = view.querySelector(".app-version-label");
-    if (label) {
-      label.innerText = QUICK_TOOLS_PATCH_VERSION;
-    }
+    if (label) label.innerText = PATCH_VERSION;
   }
 
-  function ensureQuickToolsTypeControls() {
-    const view = document.getElementById("adminQuickToolsView");
+  function ensureTypeControls() {
     const oldAreasButton = document.getElementById("quickToolsAreasButton");
-    if (!view || !oldAreasButton) return;
+    if (!oldAreasButton) return;
 
     oldAreasButton.innerText = "COMMON AREAS";
     oldAreasButton.onclick = function() {
@@ -256,289 +254,14 @@ await import(ADMIN_CORE_SCRIPT);
     };
 
     let roomsButton = document.getElementById("quickToolsRoomsButton");
-    if (!roomsButton) {
-      roomsButton = document.createElement("button");
-      roomsButton.id = "quickToolsRoomsButton";
-      roomsButton.type = "button";
-      roomsButton.innerText = "ROOMS";
+    if (roomsButton) {
       roomsButton.onclick = function() {
         window.setQuickToolsMode("rooms");
       };
     }
-
-    let typeRow = document.getElementById("quickToolsTypeRow");
-    if (!typeRow) {
-      const oldFloorRow = oldAreasButton.parentElement;
-      const typeTitle = document.createElement("div");
-      typeTitle.className = "admin-dashboard-subtitle";
-      typeTitle.innerText = "Choose type";
-
-      typeRow = document.createElement("div");
-      typeRow.id = "quickToolsTypeRow";
-      typeRow.className = "quick-tools-filter-row";
-
-      if (oldFloorRow && oldFloorRow.parentNode) {
-        oldFloorRow.parentNode.insertBefore(typeTitle, oldFloorRow.nextSibling);
-        typeTitle.parentNode.insertBefore(typeRow, typeTitle.nextSibling);
-      }
-    }
-
-    if (roomsButton.parentElement !== typeRow) {
-      typeRow.appendChild(roomsButton);
-    }
-
-    if (oldAreasButton.parentElement !== typeRow) {
-      typeRow.appendChild(oldAreasButton);
-    }
-
-    const areaLabel = document.querySelector("#quickToolsAreaSearchBox .quick-tools-search-label");
-    if (areaLabel) areaLabel.innerText = "Choose common area";
   }
 
-  function clearQuickToolsPatchSelection() {
-    const label = document.getElementById("quickToolsSelectedLabel");
-    const actions = document.getElementById("quickToolsActionButtons");
-    if (label) {
-      label.classList.add("hidden");
-      label.innerText = "";
-    }
-    if (actions) actions.classList.add("hidden");
-  }
-
-  function drawQuickToolsCommonAreaMessage(message) {
-    const box = document.getElementById("quickToolsAreaButtons");
-    if (!box) return;
-
-    box.innerHTML = "";
-    const msg = document.createElement("div");
-    msg.className = "quick-tools-selected-card";
-    msg.innerText = message;
-    box.appendChild(msg);
-  }
-
-  function drawQuickToolsCommonAreaButtons() {
-    const box = document.getElementById("quickToolsAreaButtons");
-    if (!box) return;
-
-    box.innerHTML = "";
-
-    if (quickToolsFilterState.type !== "commonAreas") return;
-
-    const choices = getQuickToolsUniqueCommonAreasForFloor();
-
-    if (choices.length === 0) {
-      const msg = document.createElement("div");
-      msg.className = "quick-tools-selected-card";
-      msg.innerText = "No common areas found.";
-      box.appendChild(msg);
-      return;
-    }
-
-    choices.forEach(function(choice) {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "yellow";
-      btn.innerHTML = '<span class="room-number">' + escapeQuickToolsHtml(choice.areaName) + '</span>';
-      btn.onclick = function() {
-        openQuickToolsCommonAreaEditor(choice.area);
-      };
-      box.appendChild(btn);
-    });
-  }
-
-  function openQuickToolsCommonAreaEditor(area) {
-    if (!area || !area.id) {
-      window.showAppMessage("Common area not found.", "Common Area");
-      return;
-    }
-
-    const assignment = getQuickToolsCommonAreaAssignment(area);
-    const day = String(area.scheduleDay || area.day || "daily").trim() || "daily";
-
-    sessionStorage.setItem("adminStartView", "ScheduleEditor");
-    sessionStorage.setItem("adminEditSource", "quickToolsCommonArea");
-    sessionStorage.setItem("adminOpenMode", "details");
-    sessionStorage.setItem("adminOpenAssignment", assignment);
-    sessionStorage.setItem("adminOpenCategory", "Common Area");
-    sessionStorage.setItem("adminOpenAreaId", String(area.id || ""));
-    sessionStorage.setItem("adminOpenAreaName", String(area.areaName || ""));
-    sessionStorage.setItem("adminOpenDay", day);
-    sessionStorage.removeItem("adminOpenTaskView");
-
-    window.location.href = "admin.html#schedule-editor";
-  }
-
-  const originalOpenQuickToolsView = window.openQuickToolsView;
-  const originalSetQuickToolsFloor = window.setQuickToolsFloor;
-
-  async function showQuickToolsCommonAreas() {
-    clearQuickToolsPatchSelection();
-    updateQuickToolsFilterButtons();
-    updateQuickToolsVersionLabel();
-    drawQuickToolsCommonAreaMessage("Loading common areas...");
-
-    try {
-      await loadQuickToolsCommonAreas();
-      drawQuickToolsCommonAreaButtons();
-    } catch (error) {
-      drawQuickToolsCommonAreaMessage("Could not load common areas. Refresh and try again.");
-    }
-  }
-
-  window.setQuickToolsMode = async function(type) {
-    quickToolsFilterState.type = type === "commonAreas" ? "commonAreas" : "rooms";
-    clearQuickToolsPatchSelection();
-
-    if (quickToolsFilterState.type === "commonAreas") {
-      await showQuickToolsCommonAreas();
-      return;
-    }
-
-    drawQuickToolsCommonAreaButtons();
-
-    if (typeof originalSetQuickToolsFloor === "function") {
-      originalSetQuickToolsFloor.call(this, quickToolsFilterState.floor);
-    }
-
-    updateQuickToolsFilterButtons();
-    updateQuickToolsVersionLabel();
-  };
-
-  if (typeof originalOpenQuickToolsView === "function") {
-    window.openQuickToolsView = async function() {
-      const result = await originalOpenQuickToolsView.apply(this, arguments);
-      quickToolsFilterState.floor = "1";
-      quickToolsFilterState.type = "rooms";
-      loadQuickToolsCommonAreas().catch(function() {});
-      clearQuickToolsPatchSelection();
-      drawQuickToolsCommonAreaButtons();
-      updateQuickToolsFilterButtons();
-      updateQuickToolsVersionLabel();
-      updateQuickToolsMainDoorLabels();
-      return result;
-    };
-  }
-
-  if (typeof originalSetQuickToolsFloor === "function") {
-    window.setQuickToolsFloor = async function(floor) {
-      if (floor === "areas" || floor === "commonAreas") {
-        await window.setQuickToolsMode("commonAreas");
-        return;
-      }
-
-      quickToolsFilterState.floor = String(floor || "1");
-
-      if (quickToolsFilterState.type === "commonAreas") {
-        await showQuickToolsCommonAreas();
-        return;
-      }
-
-      const result = originalSetQuickToolsFloor.apply(this, arguments);
-      updateQuickToolsFilterButtons();
-      updateQuickToolsVersionLabel();
-      updateQuickToolsMainDoorLabels();
-
-      return result;
-    };
-  }
-
-  window.selectQuickToolsAreaFromDropdown = function() {
-    drawQuickToolsCommonAreaButtons();
-  };
-
-  updateQuickToolsMainDoorLabels();
-  window.setTimeout(updateQuickToolsMainDoorLabels, 0);
-})();
-
-/* =========================
-   43D - MAIN DOOR WEEKDAY BUTTONS
-========================== */
-
-(function patchMainDoorWeekdayButtons() {
-  let selectedMainDoorWeekday = "All";
-  const weekdays = [
-    { key: "All", label: "ALL" },
-    { key: "Monday", label: "MON" },
-    { key: "Tuesday", label: "TUE" },
-    { key: "Wednesday", label: "WED" },
-    { key: "Thursday", label: "THU" },
-    { key: "Friday", label: "FRI" },
-    { key: "Saturday", label: "SAT" },
-    { key: "Sunday", label: "SUN" }
-  ];
-
-  function ensureMainDoorWeekdayControls() {
-    const view = document.getElementById("adminQuickToolsView");
-    const roomSearchBox = document.getElementById("quickToolsRoomSearchBox");
-    if (!view || !roomSearchBox) return;
-
-    let title = document.getElementById("quickToolsWeekdayTitle");
-    let row = document.getElementById("quickToolsWeekdayRow");
-
-    if (!title) {
-      title = document.createElement("div");
-      title.id = "quickToolsWeekdayTitle";
-      title.className = "admin-dashboard-subtitle";
-      title.innerText = "Choose day";
-      roomSearchBox.parentNode.insertBefore(title, roomSearchBox);
-    }
-
-    if (!row) {
-      row = document.createElement("div");
-      row.id = "quickToolsWeekdayRow";
-      row.className = "weekday-row";
-      title.parentNode.insertBefore(row, title.nextSibling);
-    }
-
-    row.innerHTML = "";
-    weekdays.forEach(function(day) {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.innerText = day.label;
-      button.classList.toggle("active-day", selectedMainDoorWeekday === day.key);
-      button.onclick = function() {
-        window.setQuickToolsWeekday(day.key);
-      };
-      row.appendChild(button);
-    });
-  }
-
-  window.setQuickToolsWeekday = function(day) {
-    selectedMainDoorWeekday = day || "All";
-    ensureMainDoorWeekdayControls();
-  };
-
-  const previousOpenQuickToolsView = window.openQuickToolsView;
-  if (typeof previousOpenQuickToolsView === "function") {
-    window.openQuickToolsView = async function() {
-      const result = await previousOpenQuickToolsView.apply(this, arguments);
-      selectedMainDoorWeekday = "All";
-      ensureMainDoorWeekdayControls();
-      return result;
-    };
-  }
-
-  ensureMainDoorWeekdayControls();
-  window.setTimeout(ensureMainDoorWeekdayControls, 0);
-})();
-
-/* =========================
-   43E - MAIN DOOR SCHEDULE BUTTONS
-========================== */
-
-(function patchMainDoorScheduleButtons() {
-  let selectedMainDoorSchedule = "All";
-  const schedules = [
-    { key: "All", label: "ALL" },
-    { key: "HK1", label: "HK1" },
-    { key: "HK2", label: "HK2" },
-    { key: "1stfloor", label: "1ST" },
-    { key: "2ndFloor", label: "2ND" },
-    { key: "3rdFloor", label: "3RD" },
-    { key: "Laundry", label: "LAUNDRY" }
-  ];
-
-  function ensureMainDoorScheduleControls() {
+  function ensureScheduleControls() {
     const view = document.getElementById("adminQuickToolsView");
     const typeTitle = document.querySelector("#adminQuickToolsView .admin-dashboard-subtitle");
     if (!view || !typeTitle) return;
@@ -566,7 +289,7 @@ await import(ADMIN_CORE_SCRIPT);
       const button = document.createElement("button");
       button.type = "button";
       button.innerText = schedule.label;
-      button.classList.toggle("active-quick-floor", selectedMainDoorSchedule === schedule.key);
+      button.classList.toggle("active-quick-floor", getFilterState().schedule === schedule.key);
       button.onclick = function() {
         window.setQuickToolsSchedule(schedule.key);
       };
@@ -574,122 +297,324 @@ await import(ADMIN_CORE_SCRIPT);
     });
   }
 
-  window.setQuickToolsSchedule = function(schedule) {
-    selectedMainDoorSchedule = schedule || "All";
-    ensureMainDoorScheduleControls();
-  };
+  function ensureWeekdayControls() {
+    const view = document.getElementById("adminQuickToolsView");
+    const roomSearchBox = document.getElementById("quickToolsRoomSearchBox");
+    if (!view || !roomSearchBox) return;
 
-  const previousOpenQuickToolsView = window.openQuickToolsView;
-  if (typeof previousOpenQuickToolsView === "function") {
-    window.openQuickToolsView = async function() {
-      const result = await previousOpenQuickToolsView.apply(this, arguments);
-      selectedMainDoorSchedule = "All";
-      ensureMainDoorScheduleControls();
-      return result;
-    };
-  }
+    let title = document.getElementById("quickToolsWeekdayTitle");
+    let row = document.getElementById("quickToolsWeekdayRow");
 
-  ensureMainDoorScheduleControls();
-  window.setTimeout(ensureMainDoorScheduleControls, 0);
-})();
-
-/* =========================
-   43F - MAIN DOOR FILTER STATE MEMORY
-========================== */
-
-(function patchMainDoorFilterStateMemory() {
-  const STORAGE_KEY = "mainDoorFilterState";
-  const defaultState = {
-    schedule: "All",
-    type: "rooms",
-    floor: "1",
-    weekday: "All"
-  };
-
-  function loadState() {
-    try {
-      return Object.assign({}, defaultState, JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "{}"));
-    } catch (error) {
-      return Object.assign({}, defaultState);
-    }
-  }
-
-  function saveState() {
-    window.mainDoorFilterState = Object.assign({}, defaultState, window.mainDoorFilterState || {});
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(window.mainDoorFilterState));
-  }
-
-  function setStateValue(key, value) {
-    window.mainDoorFilterState = Object.assign({}, defaultState, window.mainDoorFilterState || {});
-    window.mainDoorFilterState[key] = value;
-    saveState();
-  }
-
-  function restoreMainDoorState() {
-    const state = Object.assign({}, defaultState, window.mainDoorFilterState || loadState());
-
-    if (typeof window.setQuickToolsSchedule === "function") {
-      window.setQuickToolsSchedule(state.schedule);
+    if (!title) {
+      title = document.createElement("div");
+      title.id = "quickToolsWeekdayTitle";
+      title.className = "admin-dashboard-subtitle";
+      title.innerText = "Choose day";
+      roomSearchBox.parentNode.insertBefore(title, roomSearchBox);
     }
 
-    if (typeof window.setQuickToolsMode === "function") {
-      window.setQuickToolsMode(state.type);
+    if (!row) {
+      row = document.createElement("div");
+      row.id = "quickToolsWeekdayRow";
+      row.className = "weekday-row";
+      title.parentNode.insertBefore(row, title.nextSibling);
     }
 
-    if (typeof window.setQuickToolsFloor === "function") {
-      window.setQuickToolsFloor(state.floor);
+    row.innerHTML = "";
+    weekdays.forEach(function(day) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.innerText = day.label;
+      button.classList.toggle("active-day", getFilterState().weekday === day.key);
+      button.onclick = function() {
+        window.setQuickToolsWeekday(day.key);
+      };
+      row.appendChild(button);
+    });
+  }
+
+  function updateFilterButtons() {
+    const state = getFilterState();
+
+    ["1", "2", "3"].forEach(function(floor) {
+      const btn = document.getElementById("quickToolsFloor" + floor + "Button");
+      if (btn) btn.classList.toggle("active-quick-floor", state.floor === floor);
+    });
+
+    const roomsButton = document.getElementById("quickToolsRoomsButton");
+    const areasButton = document.getElementById("quickToolsAreasButton");
+    if (roomsButton) roomsButton.classList.toggle("active-quick-floor", state.type === "rooms");
+    if (areasButton) areasButton.classList.toggle("active-quick-floor", state.type === "commonAreas");
+
+    const roomSearchBox = document.getElementById("quickToolsRoomSearchBox");
+    const areaSearchBox = document.getElementById("quickToolsAreaSearchBox");
+    const roomButtons = document.getElementById("quickToolsRoomButtons");
+    const areaButtons = document.getElementById("quickToolsAreaButtons");
+    const showingAreas = state.type === "commonAreas";
+
+    if (roomSearchBox) roomSearchBox.classList.toggle("hidden", showingAreas);
+    if (areaSearchBox) areaSearchBox.classList.toggle("hidden", !showingAreas);
+    if (roomButtons) roomButtons.classList.toggle("hidden", showingAreas);
+    if (areaButtons) areaButtons.classList.toggle("hidden", !showingAreas);
+  }
+
+  function clearSelection() {
+    const label = document.getElementById("quickToolsSelectedLabel");
+    const actions = document.getElementById("quickToolsActionButtons");
+    if (label) {
+      label.classList.add("hidden");
+      label.innerText = "";
+    }
+    if (actions) actions.classList.add("hidden");
+  }
+
+  function drawMessage(containerId, message) {
+    const box = document.getElementById(containerId);
+    if (!box) return;
+
+    box.innerHTML = "";
+    const msg = document.createElement("div");
+    msg.className = "quick-tools-selected-card";
+    msg.innerText = message;
+    box.appendChild(msg);
+  }
+
+  function roomMatchesFilters(area) {
+    const state = getFilterState();
+    const assignment = getAreaAssignment(area);
+    const areaFloor = getAreaFloor(area);
+    const areaDay = getAreaDay(area).toLowerCase();
+    const category = String(area.category || "").trim();
+    const searchInput = document.getElementById("quickToolsRoomSearchInput");
+    const searchText = String(searchInput ? searchInput.value : "").replace(/\D/g, "");
+    const roomKey = getRoomKey(area.areaName);
+
+    if (state.schedule !== "All" && assignment !== state.schedule) return false;
+    if (state.floor !== "All" && areaFloor !== state.floor) return false;
+    if (searchText && !roomKey.includes(searchText)) return false;
+
+    if (state.weekday !== "All") {
+      if (category === "Daily Room") return true;
+      if (areaDay === "daily") return true;
+      if (areaDay !== state.weekday.toLowerCase()) return false;
     }
 
-    if (typeof window.setQuickToolsWeekday === "function") {
-      window.setQuickToolsWeekday(state.weekday);
-    }
+    return true;
   }
 
-  window.mainDoorFilterState = loadState();
+  function getFilteredUniqueRooms() {
+    const groups = {};
 
-  const originalSetQuickToolsSchedule = window.setQuickToolsSchedule;
-  if (typeof originalSetQuickToolsSchedule === "function") {
-    window.setQuickToolsSchedule = function(schedule) {
-      setStateValue("schedule", schedule || "All");
-      return originalSetQuickToolsSchedule.apply(this, arguments);
-    };
-  }
+    roomRecords.filter(roomMatchesFilters).forEach(function(area) {
+      const roomKey = getRoomKey(area.areaName);
+      if (!roomKey) return;
 
-  const originalSetQuickToolsMode = window.setQuickToolsMode;
-  if (typeof originalSetQuickToolsMode === "function") {
-    window.setQuickToolsMode = function(type) {
-      setStateValue("type", type === "commonAreas" ? "commonAreas" : "rooms");
-      return originalSetQuickToolsMode.apply(this, arguments);
-    };
-  }
-
-  const originalSetQuickToolsFloor = window.setQuickToolsFloor;
-  if (typeof originalSetQuickToolsFloor === "function") {
-    window.setQuickToolsFloor = function(floor) {
-      if (floor !== "areas" && floor !== "commonAreas") {
-        setStateValue("floor", String(floor || "1"));
+      if (!groups[roomKey]) {
+        groups[roomKey] = {
+          roomKey: roomKey,
+          rows: []
+        };
       }
-      return originalSetQuickToolsFloor.apply(this, arguments);
-    };
+
+      groups[roomKey].rows.push(area);
+    });
+
+    return Object.keys(groups).sort(function(a, b) {
+      return Number(a) - Number(b);
+    }).map(function(roomKey) {
+      const rows = groups[roomKey].rows;
+      const preferred = rows.find(function(area) {
+        return String(area.category || "") === "Weekly Room";
+      }) || rows[0];
+
+      return {
+        roomKey: roomKey,
+        area: preferred,
+        rows: rows
+      };
+    });
   }
 
-  const originalSetQuickToolsWeekday = window.setQuickToolsWeekday;
-  if (typeof originalSetQuickToolsWeekday === "function") {
-    window.setQuickToolsWeekday = function(day) {
-      setStateValue("weekday", day || "All");
-      return originalSetQuickToolsWeekday.apply(this, arguments);
-    };
+  function selectMainDoorRoom(room) {
+    const input = document.getElementById("quickToolsRoomSearchInput");
+    const label = document.getElementById("quickToolsSelectedLabel");
+    const actions = document.getElementById("quickToolsActionButtons");
+
+    if (input) input.value = room.roomKey;
+
+    sessionStorage.setItem("mainDoorSelectedType", "room");
+    sessionStorage.setItem("mainDoorSelectedRoom", room.roomKey);
+    sessionStorage.setItem("mainDoorSelectedAreaId", String(room.area.id || ""));
+    sessionStorage.setItem("mainDoorSelectedAreaName", String(room.area.areaName || room.roomKey));
+
+    if (label) {
+      label.innerText = "Room " + room.roomKey;
+      label.classList.remove("hidden");
+    }
+
+    if (actions) actions.classList.remove("hidden");
   }
 
-  const originalOpenQuickToolsView = window.openQuickToolsView;
+  function drawRoomButtons() {
+    const box = document.getElementById("quickToolsRoomButtons");
+    if (!box) return;
+
+    box.innerHTML = "";
+
+    if (getFilterState().type !== "rooms") return;
+
+    const rooms = getFilteredUniqueRooms();
+
+    if (rooms.length === 0) {
+      drawMessage("quickToolsRoomButtons", "No rooms found.");
+      return;
+    }
+
+    rooms.forEach(function(room) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "yellow";
+      btn.innerHTML = '<span class="room-number">' + escapeMainDoorHtml(room.roomKey) + '</span>';
+      btn.onclick = function() {
+        selectMainDoorRoom(room);
+      };
+      box.appendChild(btn);
+    });
+  }
+
+  function commonAreaMatchesFilters(area) {
+    const state = getFilterState();
+    const areaFloor = getAreaFloor(area);
+    const assignment = getAreaAssignment(area);
+    const areaDay = getAreaDay(area).toLowerCase();
+
+    if (state.floor !== "All" && areaFloor !== state.floor) return false;
+    if (state.schedule !== "All" && assignment && assignment !== state.schedule) return false;
+    if (state.weekday !== "All" && areaDay !== "daily" && areaDay !== state.weekday.toLowerCase()) return false;
+
+    return true;
+  }
+
+  function drawCommonAreaButtons() {
+    const box = document.getElementById("quickToolsAreaButtons");
+    if (!box) return;
+
+    box.innerHTML = "";
+
+    if (getFilterState().type !== "commonAreas") return;
+
+    const groups = {};
+    commonAreaRecords.filter(commonAreaMatchesFilters).forEach(function(area) {
+      const areaName = String(area.areaName || "").trim();
+      const groupKey = makeMainDoorKey(areaName);
+      if (!groups[groupKey]) groups[groupKey] = { areaName: areaName, area: area };
+    });
+
+    const choices = Object.keys(groups).sort(function(a, b) {
+      return String(groups[a].areaName || "").localeCompare(String(groups[b].areaName || ""), undefined, { numeric: true });
+    });
+
+    if (choices.length === 0) {
+      drawMessage("quickToolsAreaButtons", "No common areas found.");
+      return;
+    }
+
+    choices.forEach(function(groupKey) {
+      const choice = groups[groupKey];
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "yellow";
+      btn.innerHTML = '<span class="room-number">' + escapeMainDoorHtml(choice.areaName) + '</span>';
+      btn.onclick = function() {
+        sessionStorage.setItem("mainDoorSelectedType", "commonArea");
+        sessionStorage.setItem("mainDoorSelectedAreaId", String(choice.area.id || ""));
+        sessionStorage.setItem("mainDoorSelectedAreaName", String(choice.area.areaName || ""));
+        const label = document.getElementById("quickToolsSelectedLabel");
+        const actions = document.getElementById("quickToolsActionButtons");
+        if (label) {
+          label.innerText = choice.areaName;
+          label.classList.remove("hidden");
+        }
+        if (actions) actions.classList.remove("hidden");
+      };
+      box.appendChild(btn);
+    });
+  }
+
+  async function refreshMainDoorResults() {
+    updateMainDoorLabels();
+    ensureTypeControls();
+    ensureScheduleControls();
+    ensureWeekdayControls();
+    updateFilterButtons();
+    updateVersionLabel();
+
+    try {
+      await loadMainDoorAreas();
+      drawRoomButtons();
+      drawCommonAreaButtons();
+    } catch (error) {
+      if (getFilterState().type === "rooms") {
+        drawMessage("quickToolsRoomButtons", "Could not load rooms. Refresh and try again.");
+      } else {
+        drawMessage("quickToolsAreaButtons", "Could not load common areas. Refresh and try again.");
+      }
+    }
+  }
+
+  window.setQuickToolsSchedule = function(schedule) {
+    setFilterState("schedule", schedule || "All");
+    clearSelection();
+    refreshMainDoorResults();
+  };
+
+  window.setQuickToolsWeekday = function(day) {
+    setFilterState("weekday", day || "All");
+    clearSelection();
+    refreshMainDoorResults();
+  };
+
+  window.setQuickToolsMode = function(type) {
+    setFilterState("type", type === "commonAreas" ? "commonAreas" : "rooms");
+    clearSelection();
+    refreshMainDoorResults();
+  };
+
+  window.setQuickToolsFloor = function(floor) {
+    if (floor === "areas" || floor === "commonAreas") {
+      window.setQuickToolsMode("commonAreas");
+      return;
+    }
+
+    setFilterState("floor", String(floor || "1"));
+    clearSelection();
+
+    if (typeof originalSetQuickToolsFloor === "function" && getFilterState().type === "rooms") {
+      originalSetQuickToolsFloor.call(this, floor);
+    }
+
+    refreshMainDoorResults();
+  };
+
+  window.handleQuickToolsRoomSearch = function() {
+    if (typeof originalHandleQuickToolsRoomSearch === "function") {
+      originalHandleQuickToolsRoomSearch.apply(this, arguments);
+    }
+    clearSelection();
+    refreshMainDoorResults();
+  };
+
   if (typeof originalOpenQuickToolsView === "function") {
     window.openQuickToolsView = async function() {
       const result = await originalOpenQuickToolsView.apply(this, arguments);
-      window.mainDoorFilterState = loadState();
-      window.setTimeout(restoreMainDoorState, 0);
+      window.mainDoorFilterState = loadFilterState();
+      refreshMainDoorResults();
       return result;
     };
   }
 
-  saveState();
+  window.mainDoorFilterState = loadFilterState();
+  saveFilterState();
+  updateMainDoorLabels();
+  window.setTimeout(refreshMainDoorResults, 0);
 })();
