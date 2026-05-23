@@ -640,7 +640,12 @@
       <button id="quickToolsFloor1Button" type="button" onclick="setQuickToolsFloor('1')">1ST FLOOR</button>
       <button id="quickToolsFloor2Button" type="button" onclick="setQuickToolsFloor('2')">2ND FLOOR</button>
       <button id="quickToolsFloor3Button" type="button" onclick="setQuickToolsFloor('3')">3RD FLOOR</button>
-      <button id="quickToolsAreasButton" type="button" onclick="setQuickToolsFloor('areas')">AREAS</button>
+    </div>
+
+    <div class="admin-dashboard-subtitle">Choose type</div>
+    <div id="quickToolsTypeRow" class="quick-tools-filter-row">
+      <button id="quickToolsRoomsButton" type="button" onclick="setQuickToolsMode('rooms')">ROOMS</button>
+      <button id="quickToolsAreasButton" type="button" onclick="setQuickToolsMode('commonAreas')">COMMON AREAS</button>
     </div>
 
     <div id="quickToolsRoomSearchBox">
@@ -657,7 +662,7 @@
     </div>
 
     <div id="quickToolsAreaSearchBox" class="hidden">
-      <div class="quick-tools-search-label">Choose area</div>
+      <div class="quick-tools-search-label">Choose common area</div>
       <div id="quickToolsAreaButtons" class="rooms-grid quick-tools-area-buttons"></div>
     </div>
 
@@ -674,7 +679,7 @@
 
     <button class="back" type="button" onclick="backToAdminCategories()">BACK</button>
 
-    <div class="app-version-label">Updated: 2026-05-22 8:20 PM | admin.html</div>
+    <div class="app-version-label">Updated: 2026-05-22 8:27 PM | admin.html</div>
 
   </div>
 
@@ -1390,7 +1395,7 @@
 </div>
 
 
-<script type="module" src="admin.js?v=20260522-2020"></script>
+<script type="module" src="admin.js?v=20260522-2027"></script>
 
 </body>
 </html>
