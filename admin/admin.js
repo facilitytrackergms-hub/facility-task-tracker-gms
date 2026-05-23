@@ -6,33 +6,14 @@ const ADMIN_CORE_SCRIPT = "https://cdn.jsdelivr.net/gh/facilitytrackergms-hub/fa
 
 await import(ADMIN_CORE_SCRIPT);
 
-import {
-  getApp,
-  getApps,
-  initializeApp
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-
-import {
-  collection,
-  getDocs,
-  getFirestore
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
 /* =========================
    43C - ROOM / AREA QUICK TOOLS FLOOR + AREA BUTTON FIX
 ========================== */
 
 (function patchQuickToolsFloorAreaFilter() {
-  const QUICK_TOOLS_PATCH_VERSION = "Updated: 2026-05-22 8:18 PM | admin.js";
-  const firebaseConfig = {
-    apiKey: "AIzaSyBgq_ooBeEN4noEyIxYPLVokgM6RjCO648",
-    authDomain: "gms-task-tracker.firebaseapp.com",
-    projectId: "gms-task-tracker",
-    storageBucket: "gms-task-tracker.firebasestorage.app",
-    messagingSenderId: "790880979860",
-    appId: "1:790880979860:web:6faee2a6e56955af3c1d81",
-    measurementId: "G-5TRHQMS039"
-  };
+  const QUICK_TOOLS_PATCH_VERSION = "Updated: 2026-05-22 8:20 PM | admin.js";
+  const FIRESTORE_REST_API_KEY = "AIzaSyBgq_ooBeEN4noEyIxYPLVokgM6RjCO648";
+  const AREAS_REST_URL = "https://firestore.googleapis.com/v1/projects/gms-task-tracker/databases/(default)/documents/areas";
 
   const quickToolsFilterState = {
     floor: "1",
@@ -45,11 +26,6 @@ import {
     "2": "2ndFloor",
     "3": "3rdFloor"
   };
-
-  function getPatchDb() {
-    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-    return getFirestore(app);
-  }
 
   function escapeQuickToolsHtml(value) {
     return String(value || "")
@@ -79,6 +55,29 @@ import {
     area.schedule = area.schedule || "";
     area.floor = area.floor || floorAssignments[getQuickToolsFloorNumberFromAssignment(area.schedule)] || "";
     return area;
+  }
+
+  function readFirestoreValue(value) {
+    if (!value) return "";
+    if (Object.prototype.hasOwnProperty.call(value, "stringValue")) return value.stringValue;
+    if (Object.prototype.hasOwnProperty.call(value, "booleanValue")) return value.booleanValue;
+    if (Object.prototype.hasOwnProperty.call(value, "integerValue")) return Number(value.integerValue);
+    if (Object.prototype.hasOwnProperty.call(value, "doubleValue")) return Number(value.doubleValue);
+    if (Object.prototype.hasOwnProperty.call(value, "timestampValue")) return value.timestampValue;
+    return "";
+  }
+
+  function normalizeQuickToolsFirestoreDocument(documentItem) {
+    const fields = documentItem && documentItem.fields ? documentItem.fields : {};
+    const output = {
+      id: String(documentItem && documentItem.name ? documentItem.name : "").split("/").pop()
+    };
+
+    Object.keys(fields).forEach(function(key) {
+      output[key] = readFirestoreValue(fields[key]);
+    });
+
+    return normalizeQuickToolsArea(output);
   }
 
   function getQuickToolsFloorNumberFromAssignment(assignment) {
@@ -111,10 +110,26 @@ import {
       return quickToolsFilterState.areaRecords;
     }
 
-    const snap = await getDocs(collection(getPatchDb(), "areas"));
-    quickToolsFilterState.areaRecords = snap.docs.map(function(areaDoc) {
-      return normalizeQuickToolsArea({ id: areaDoc.id, ...areaDoc.data() });
-    }).filter(isQuickToolsRealArea);
+    let url = AREAS_REST_URL + "?pageSize=300&key=" + encodeURIComponent(FIRESTORE_REST_API_KEY);
+    const records = [];
+
+    while (url) {
+      const response = await fetch(url, { cache: "no-store" });
+      if (!response.ok) {
+        throw new Error("Could not load areas.");
+      }
+
+      const data = await response.json();
+      (data.documents || []).forEach(function(documentItem) {
+        records.push(normalizeQuickToolsFirestoreDocument(documentItem));
+      });
+
+      url = data.nextPageToken
+        ? AREAS_REST_URL + "?pageSize=300&pageToken=" + encodeURIComponent(data.nextPageToken) + "&key=" + encodeURIComponent(FIRESTORE_REST_API_KEY)
+        : "";
+    }
+
+    quickToolsFilterState.areaRecords = records.filter(isQuickToolsRealArea);
 
     return quickToolsFilterState.areaRecords;
   }
@@ -198,6 +213,17 @@ import {
     if (actions) actions.classList.add("hidden");
   }
 
+  function drawQuickToolsAreaMessage(message) {
+    const box = document.getElementById("quickToolsAreaButtons");
+    if (!box) return;
+
+    box.innerHTML = "";
+    const msg = document.createElement("div");
+    msg.className = "quick-tools-selected-card";
+    msg.innerText = message;
+    box.appendChild(msg);
+  }
+
   function drawQuickToolsAreaButtons() {
     const box = document.getElementById("quickToolsAreaButtons");
     if (!box) return;
@@ -251,7 +277,7 @@ import {
       const result = await originalOpenQuickToolsView.apply(this, arguments);
       quickToolsFilterState.floor = "1";
       quickToolsFilterState.areaMode = false;
-      await loadQuickToolsAreas();
+      loadQuickToolsAreas().catch(function() {});
       clearQuickToolsPatchSelection();
       drawQuickToolsAreaButtons();
       updateQuickToolsFilterButtons();
@@ -265,22 +291,40 @@ import {
     window.setQuickToolsFloor = async function(floor) {
       if (floor === "areas") {
         quickToolsFilterState.areaMode = !quickToolsFilterState.areaMode;
-        await loadQuickToolsAreas();
         clearQuickToolsPatchSelection();
-        drawQuickToolsAreaButtons();
         updateQuickToolsFilterButtons();
         updateQuickToolsVersionLabel();
+
+        if (quickToolsFilterState.areaMode) {
+          drawQuickToolsAreaMessage("Loading areas...");
+          try {
+            await loadQuickToolsAreas();
+            drawQuickToolsAreaButtons();
+          } catch (error) {
+            drawQuickToolsAreaMessage("Could not load areas. Refresh and try again.");
+          }
+        } else {
+          drawQuickToolsAreaButtons();
+        }
+
         return;
       }
 
       quickToolsFilterState.floor = String(floor || "1");
 
       if (quickToolsFilterState.areaMode) {
-        await loadQuickToolsAreas();
         clearQuickToolsPatchSelection();
-        drawQuickToolsAreaButtons();
         updateQuickToolsFilterButtons();
         updateQuickToolsVersionLabel();
+        drawQuickToolsAreaMessage("Loading areas...");
+
+        try {
+          await loadQuickToolsAreas();
+          drawQuickToolsAreaButtons();
+        } catch (error) {
+          drawQuickToolsAreaMessage("Could not load areas. Refresh and try again.");
+        }
+
         return;
       }
 
