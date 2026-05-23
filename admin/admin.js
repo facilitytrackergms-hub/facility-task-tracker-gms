@@ -11,7 +11,7 @@ await import(ADMIN_CORE_SCRIPT);
 ========================== */
 
 (function patchMainDoorFlow() {
-  const PATCH_VERSION = "Updated: 2026-05-22 9:31 PM | admin.js";
+  const PATCH_VERSION = "Updated: 2026-05-22 9:36 PM | admin.js";
   const FIRESTORE_REST_API_KEY = "AIzaSyBgq_ooBeEN4noEyIxYPLVokgM6RjCO648";
   const AREAS_REST_URL = "https://firestore.googleapis.com/v1/projects/gms-task-tracker/databases/(default)/documents/areas";
   const FILTER_STORAGE_KEY = "mainDoorFilterState";
@@ -27,6 +27,12 @@ await import(ADMIN_CORE_SCRIPT);
     "1": "1stfloor",
     "2": "2ndFloor",
     "3": "3rdFloor"
+  };
+
+  const assignmentFloors = {
+    "1stfloor": "1",
+    "2ndFloor": "2",
+    "3rdFloor": "3"
   };
 
   const schedules = [
@@ -487,12 +493,38 @@ await import(ADMIN_CORE_SCRIPT);
     const areaFloor = getAreaFloor(area);
     const assignment = getAreaAssignment(area);
     const areaDay = getAreaDay(area).toLowerCase();
+    const floorSchedule = floorAssignments[state.floor] || "";
+    const scheduleFloor = assignmentFloors[state.schedule] || "";
 
-    if (state.floor !== "All" && areaFloor !== state.floor) return false;
-    if (state.schedule !== "All" && assignment && assignment !== state.schedule) return false;
+    if (state.floor !== "All") {
+      if (areaFloor && areaFloor !== state.floor) return false;
+      if (!areaFloor && assignmentFloors[assignment] && assignment !== floorSchedule) return false;
+    }
+
+    if (state.schedule !== "All") {
+      if (assignment && assignment !== state.schedule) return false;
+      if (!assignment && scheduleFloor && areaFloor && areaFloor !== scheduleFloor) return false;
+    }
+
     if (state.weekday !== "All" && areaDay !== "daily" && areaDay !== state.weekday.toLowerCase()) return false;
 
     return true;
+  }
+
+  function getCommonAreaChoiceScore(area) {
+    const state = getFilterState();
+    const areaFloor = getAreaFloor(area);
+    const assignment = getAreaAssignment(area);
+    const areaDay = getAreaDay(area).toLowerCase();
+    let score = 0;
+
+    if (state.schedule !== "All" && assignment === state.schedule) score += 20;
+    if (state.floor !== "All" && areaFloor === state.floor) score += 10;
+    if (state.weekday !== "All" && areaDay === state.weekday.toLowerCase()) score += 5;
+    if (areaDay === "daily") score += 2;
+    if (assignment) score += 1;
+
+    return score;
   }
 
   function drawCommonAreaButtons() {
@@ -507,7 +539,8 @@ await import(ADMIN_CORE_SCRIPT);
     commonAreaRecords.filter(commonAreaMatchesFilters).forEach(function(area) {
       const areaName = String(area.areaName || "").trim();
       const groupKey = makeMainDoorKey(areaName);
-      if (!groups[groupKey]) groups[groupKey] = { areaName: areaName, area: area };
+      if (!groups[groupKey]) groups[groupKey] = { areaName: areaName, areas: [] };
+      groups[groupKey].areas.push(area);
     });
 
     const choices = Object.keys(groups).sort(function(a, b) {
@@ -520,19 +553,23 @@ await import(ADMIN_CORE_SCRIPT);
     }
 
     choices.forEach(function(groupKey) {
-      const choice = groups[groupKey];
+      const group = groups[groupKey];
+      const choiceArea = group.areas.slice().sort(function(a, b) {
+        return getCommonAreaChoiceScore(b) - getCommonAreaChoiceScore(a);
+      })[0];
+
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "yellow";
-      btn.innerHTML = '<span class="room-number">' + escapeMainDoorHtml(choice.areaName) + '</span>';
+      btn.innerHTML = '<span class="room-number">' + escapeMainDoorHtml(group.areaName) + '</span>';
       btn.onclick = function() {
         sessionStorage.setItem("mainDoorSelectedType", "commonArea");
-        sessionStorage.setItem("mainDoorSelectedAreaId", String(choice.area.id || ""));
-        sessionStorage.setItem("mainDoorSelectedAreaName", String(choice.area.areaName || ""));
+        sessionStorage.setItem("mainDoorSelectedAreaId", String(choiceArea.id || ""));
+        sessionStorage.setItem("mainDoorSelectedAreaName", String(choiceArea.areaName || ""));
         const label = document.getElementById("quickToolsSelectedLabel");
         const actions = document.getElementById("quickToolsActionButtons");
         if (label) {
-          label.innerText = choice.areaName;
+          label.innerText = group.areaName;
           label.classList.remove("hidden");
         }
         if (actions) actions.classList.remove("hidden");
