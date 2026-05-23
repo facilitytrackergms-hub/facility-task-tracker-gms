@@ -2,23 +2,37 @@
    01 - ADMIN.JS SAFE LOCAL BUILD
 ========================== */
 
-const ADMIN_VERSION_LABEL = "Updated: 2026-05-23 03:28 AM | admin.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  getDocs
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBgq_ooBeEN4noEyIxYPLVokgM6RjCO648",
+  authDomain: "gms-task-tracker.firebaseapp.com",
+  projectId: "gms-task-tracker",
+  storageBucket: "gms-task-tracker.firebasestorage.app",
+  messagingSenderId: "790880979860",
+  appId: "1:790880979860:web:6faee2a6e56955af3c1d81",
+  measurementId: "G-5TRHQMS039"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const ADMIN_VERSION_LABEL = "Updated: 2026-05-22 11:32 PM | admin.js";
 
 /* =========================
    02 - LOCAL DATA
 ========================== */
 
 const ADMIN_SCHEDULES = ["HK1", "HK2", "1stfloor", "2ndFloor", "3rdFloor", "Laundry"];
-const ADMIN_FLOORS = {
-  "1": ["101", "102", "103", "104", "105", "106", "107", "108", "109", "110", "111", "112", "113", "114", "115", "116", "117", "118", "119"],
-  "2": ["201", "202", "203", "204", "205", "206", "207", "208", "209", "210", "211", "212", "213", "214", "215", "216", "217", "218", "219", "220", "221", "222", "223", "224", "225", "226", "227", "228", "229"],
-  "3": ["301", "302", "303", "304", "305", "306", "307", "308", "309", "310", "311", "312", "313", "314", "315", "316", "317", "318", "319", "320", "321", "322", "323", "324", "325", "326", "327", "328", "329"]
-};
-const ADMIN_COMMON_AREAS = {
-  "1": ["Lobby", "Dining Room", "Kitchen", "Front Hall", "Public Restroom"],
-  "2": ["Second Floor Hall", "Activity Room", "Laundry Room", "Elevator Area"],
-  "3": ["Third Floor Hall", "Storage Room", "Elevator Area", "Common Restroom"]
-};
+let ADMIN_FLOORS = { "1": [], "2": [], "3": [] };
+let ADMIN_COMMON_AREAS = { "1": [], "2": [], "3": [] };
+let adminDoorDataLoaded = false;
+let adminDoorDataLoading = null;
 
 let adminCurrentSchedule = "";
 let adminCurrentCategory = "";
@@ -193,13 +207,16 @@ function backToScheduleEditorList() { openScheduleEditor(); }
    07 - AREA LIST AND EDIT
 ========================== */
 
-function openAdminAreaList(schedule, category) {
+async function openAdminAreaList(schedule, category) {
   adminCurrentSchedule = schedule || adminCurrentSchedule || "HK1";
   adminCurrentCategory = category || "rooms";
   showOnly("adminAreaView");
   setText("adminAreaAssignmentTitle", adminCurrentSchedule);
   setText("adminAreaModeLabel", adminCurrentCategory === "commonAreas" ? "Common Areas" : "Rooms");
   setText("adminAreaTitle", adminCurrentCategory === "commonAreas" ? "Common Areas" : "Rooms");
+  const box = byId("adminAreaButtons");
+  if (box) box.innerHTML = "Loading database rooms...";
+  await loadMainDoorDataFromDatabase(false);
   drawAdminAreaButtons();
 }
 
@@ -236,11 +253,120 @@ function changeAdminAreaScheduleDay() {}
 function setAdminAreaWeekday(day) { localStorage.setItem("adminAreaWeekday", day); }
 
 /* =========================
+   07A - DATABASE DOOR DATA
+========================== */
+
+function normalizeDoorFloor(value, fallbackName) {
+  const text = String(value || fallbackName || "").trim().toLowerCase();
+  const numberText = String(fallbackName || value || "").match(/\d+/);
+
+  if (text.includes("1st") || text.includes("first") || text === "1" || text === "1stfloor") return "1";
+  if (text.includes("2nd") || text.includes("second") || text === "2" || text === "2ndfloor") return "2";
+  if (text.includes("3rd") || text.includes("third") || text === "3" || text === "3rdfloor") return "3";
+
+  if (numberText) {
+    const firstDigit = numberText[0].charAt(0);
+    if (["1", "2", "3"].includes(firstDigit)) return firstDigit;
+  }
+
+  return "1";
+}
+
+function getDatabaseRoomNumber(area) {
+  const roomSource = area.roomKey || area.roomNumber || area.roomName || area.areaName || area.name || "";
+  const match = String(roomSource).match(/\d+/);
+  return match ? match[0] : "";
+}
+
+function getDatabaseAreaName(area, fallbackId) {
+  return String(area.areaName || area.name || area.label || area.title || fallbackId || "").trim();
+}
+
+function addUniqueDoorValue(list, value) {
+  const text = String(value || "").trim();
+  if (!text) return;
+
+  const exists = list.some(function(item) {
+    return String(item || "").trim().toLowerCase() === text.toLowerCase();
+  });
+
+  if (!exists) list.push(text);
+}
+
+function sortDoorValues(list) {
+  return list.slice().sort(function(a, b) {
+    return String(a || "").localeCompare(String(b || ""), undefined, {
+      numeric: true,
+      sensitivity: "base"
+    });
+  });
+}
+
+async function loadMainDoorDataFromDatabase(forceRefresh) {
+  if (adminDoorDataLoaded && !forceRefresh) return;
+  if (adminDoorDataLoading) return adminDoorDataLoading;
+
+  adminDoorDataLoading = (async function() {
+    const floors = { "1": [], "2": [], "3": [] };
+    const commonAreas = { "1": [], "2": [], "3": [] };
+
+    try {
+      const snap = await getDocs(collection(db, "areas"));
+
+      snap.docs.forEach(function(docSnap) {
+        const area = { id: docSnap.id, ...docSnap.data() };
+        if (area.active === false) return;
+
+        const areaName = getDatabaseAreaName(area, docSnap.id);
+        const roomNumber = getDatabaseRoomNumber(area);
+        const categoryText = String(area.category || area.categoryKey || "").trim().toLowerCase();
+        const floor = normalizeDoorFloor(area.floor || area.floorNumber || area.schedule || area.sourceSheet || "", areaName || roomNumber);
+
+        if (categoryText.includes("common") || (!roomNumber && areaName)) {
+          addUniqueDoorValue(commonAreas[floor], areaName);
+          return;
+        }
+
+        if (roomNumber) {
+          addUniqueDoorValue(floors[floor], roomNumber);
+        }
+      });
+
+      ADMIN_FLOORS = {
+        "1": sortDoorValues(floors["1"]),
+        "2": sortDoorValues(floors["2"]),
+        "3": sortDoorValues(floors["3"])
+      };
+
+      ADMIN_COMMON_AREAS = {
+        "1": sortDoorValues(commonAreas["1"]),
+        "2": sortDoorValues(commonAreas["2"]),
+        "3": sortDoorValues(commonAreas["3"])
+      };
+
+      adminDoorDataLoaded = true;
+    } catch (error) {
+      console.error("Could not load Main Door data from Firestore", error);
+      showAppMessage("Could not load rooms and common areas from the database.", "Main Door");
+    } finally {
+      adminDoorDataLoading = null;
+    }
+  })();
+
+  return adminDoorDataLoading;
+}
+
+/* =========================
    08 - MAIN DOOR
 ========================== */
 
-function openQuickToolsMainDoor() {
+async function openQuickToolsMainDoor() {
   showOnly("adminQuickToolsView");
+  const roomBox = byId("quickToolsRoomButtons");
+  const areaBox = byId("quickToolsAreaButtons");
+  if (roomBox) roomBox.innerHTML = "Loading database rooms...";
+  if (areaBox) areaBox.innerHTML = "";
+  await loadMainDoorDataFromDatabase(false);
   drawQuickTools();
 }
 
@@ -279,7 +405,14 @@ function drawQuickToolRooms() {
   if (quickToolsMode !== "rooms") return;
   const search = String(byId("quickToolsRoomSearchInput")?.value || "").trim();
   const rooms = ADMIN_FLOORS[quickToolsFloor] || [];
-  rooms.filter(function(room) { return !search || room.includes(search); }).forEach(function(room) {
+  const filteredRooms = rooms.filter(function(room) { return !search || String(room).includes(search); });
+
+  if (filteredRooms.length === 0) {
+    box.innerHTML = "<div class='admin-safe-note'>No database rooms found for this floor.</div>";
+    return;
+  }
+
+  filteredRooms.forEach(function(room) {
     box.appendChild(makeButton("Room " + room, "", function() {
       quickToolsSelected = { type: "room", name: "Room " + room, key: room };
       sessionStorage.setItem("mainDoorSelectedType", "room");
@@ -294,8 +427,18 @@ function drawQuickToolAreas() {
   if (!box) return;
   box.innerHTML = "";
   if (quickToolsMode !== "commonAreas") return;
+  const areaSearch = String(byId("quickToolsAreaSearchInput")?.value || "").trim().toLowerCase();
   const areas = ADMIN_COMMON_AREAS[quickToolsFloor] || [];
-  areas.forEach(function(area) {
+  const filteredAreas = areas.filter(function(area) {
+    return !areaSearch || String(area || "").toLowerCase().includes(areaSearch);
+  });
+
+  if (filteredAreas.length === 0) {
+    box.innerHTML = "<div class='admin-safe-note'>No database common areas found for this floor.</div>";
+    return;
+  }
+
+  filteredAreas.forEach(function(area) {
     box.appendChild(makeButton(area, "", function() {
       quickToolsSelected = { type: "commonArea", name: area, key: area.toLowerCase().replace(/[^a-z0-9]+/g, "_") };
       sessionStorage.setItem("mainDoorSelectedType", "commonArea");
@@ -309,15 +452,18 @@ function drawQuickToolsSelected() {
   const label = byId("quickToolsSelectedLabel");
   const actions = byId("quickToolsActionButtons");
   if (!label || !actions) return;
+
   if (!quickToolsSelected) {
     label.classList.add("hidden");
     actions.classList.add("hidden");
     label.innerHTML = "";
     return;
   }
+
   label.classList.remove("hidden");
   actions.classList.remove("hidden");
   label.innerHTML = "Selected: " + quickToolsSelected.name + "<br><span class='admin-safe-note'>Use the yellow tools for this door.</span>";
+
   const ptac = byId("quickToolsPtacButton");
   if (ptac) ptac.classList.toggle("hidden", quickToolsSelected.type !== "room");
 }
@@ -516,7 +662,7 @@ Object.assign(window, {
 
 document.addEventListener("DOMContentLoaded", function() {
   document.querySelectorAll(".app-version-label").forEach(function(el) {
-    if (el.innerText.includes("admin.html")) el.innerText = "Updated: 2026-05-22 11:21 PM | admin.html";
+    if (el.innerText.includes("admin.html")) el.innerText = "Updated: 2026-05-22 11:32 PM | admin.html";
   });
   const mode = localStorage.getItem("adminHousekeepingMode") || "two";
   setActiveButton("modeTwoButton", mode === "two");
