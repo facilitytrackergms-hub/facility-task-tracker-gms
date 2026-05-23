@@ -7,11 +7,11 @@ const ADMIN_CORE_SCRIPT = "https://cdn.jsdelivr.net/gh/facilitytrackergms-hub/fa
 await import(ADMIN_CORE_SCRIPT);
 
 /* =========================
-   43C - ROOM / COMMON AREA QUICK TOOLS FILTER
+   43C - MAIN DOOR FILTER
 ========================== */
 
 (function patchQuickToolsFloorCommonAreaFilter() {
-  const QUICK_TOOLS_PATCH_VERSION = "Updated: 2026-05-22 8:39 PM | admin.js";
+  const QUICK_TOOLS_PATCH_VERSION = "Updated: 2026-05-22 9:05 PM | admin.js";
   const FIRESTORE_REST_API_KEY = "AIzaSyBgq_ooBeEN4noEyIxYPLVokgM6RjCO648";
   const AREAS_REST_URL = "https://firestore.googleapis.com/v1/projects/gms-task-tracker/databases/(default)/documents/areas";
 
@@ -27,12 +27,24 @@ await import(ADMIN_CORE_SCRIPT);
     "3": "3rdFloor"
   };
 
+  function updateQuickToolsMainDoorLabels() {
+    const viewTitle = document.querySelector("#adminQuickToolsView .admin-dashboard-title");
+    if (viewTitle) viewTitle.innerText = "Main Door";
+
+    document.querySelectorAll("button").forEach(function(button) {
+      const text = String(button.innerText || "").trim();
+      if (text === "Room / Area Quick Tools" || text === "Quick Tools" || text.includes("Quick Tools")) {
+        button.innerText = "Main Door";
+      }
+    });
+  }
+
   function escapeQuickToolsHtml(value) {
     return String(value || "")
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
+      .replace(/\"/g, "&quot;")
       .replace(/'/g, "&#039;");
   }
 
@@ -196,6 +208,7 @@ await import(ADMIN_CORE_SCRIPT);
 
   function updateQuickToolsFilterButtons() {
     ensureQuickToolsTypeControls();
+    updateQuickToolsMainDoorLabels();
 
     ["1", "2", "3"].forEach(function(floor) {
       const btn = document.getElementById("quickToolsFloor" + floor + "Button");
@@ -401,6 +414,7 @@ await import(ADMIN_CORE_SCRIPT);
       drawQuickToolsCommonAreaButtons();
       updateQuickToolsFilterButtons();
       updateQuickToolsVersionLabel();
+      updateQuickToolsMainDoorLabels();
       return result;
     };
   }
@@ -422,6 +436,7 @@ await import(ADMIN_CORE_SCRIPT);
       const result = originalSetQuickToolsFloor.apply(this, arguments);
       updateQuickToolsFilterButtons();
       updateQuickToolsVersionLabel();
+      updateQuickToolsMainDoorLabels();
 
       return result;
     };
@@ -430,4 +445,7 @@ await import(ADMIN_CORE_SCRIPT);
   window.selectQuickToolsAreaFromDropdown = function() {
     drawQuickToolsCommonAreaButtons();
   };
+
+  updateQuickToolsMainDoorLabels();
+  window.setTimeout(updateQuickToolsMainDoorLabels, 0);
 })();
