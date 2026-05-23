@@ -1452,6 +1452,10 @@
       color: white;
     }
 
+    .quick-tools-floor-row {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
     .quick-tools-filter-row button.active-quick-floor {
       background: #f9a825 !important;
       color: #111 !important;
