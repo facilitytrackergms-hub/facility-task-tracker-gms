@@ -11,7 +11,7 @@ await import(ADMIN_CORE_SCRIPT);
 ========================== */
 
 (function patchQuickToolsFloorCommonAreaFilter() {
-  const QUICK_TOOLS_PATCH_VERSION = "Updated: 2026-05-22 9:05 PM | admin.js";
+  const QUICK_TOOLS_PATCH_VERSION = "Updated: 2026-05-22 9:12 PM | admin.js";
   const FIRESTORE_REST_API_KEY = "AIzaSyBgq_ooBeEN4noEyIxYPLVokgM6RjCO648";
   const AREAS_REST_URL = "https://firestore.googleapis.com/v1/projects/gms-task-tracker/databases/(default)/documents/areas";
 
@@ -448,4 +448,76 @@ await import(ADMIN_CORE_SCRIPT);
 
   updateQuickToolsMainDoorLabels();
   window.setTimeout(updateQuickToolsMainDoorLabels, 0);
+})();
+
+/* =========================
+   43D - MAIN DOOR WEEKDAY BUTTONS
+========================== */
+
+(function patchMainDoorWeekdayButtons() {
+  let selectedMainDoorWeekday = "All";
+  const weekdays = [
+    { key: "All", label: "ALL" },
+    { key: "Monday", label: "MON" },
+    { key: "Tuesday", label: "TUE" },
+    { key: "Wednesday", label: "WED" },
+    { key: "Thursday", label: "THU" },
+    { key: "Friday", label: "FRI" },
+    { key: "Saturday", label: "SAT" },
+    { key: "Sunday", label: "SUN" }
+  ];
+
+  function ensureMainDoorWeekdayControls() {
+    const view = document.getElementById("adminQuickToolsView");
+    const roomSearchBox = document.getElementById("quickToolsRoomSearchBox");
+    if (!view || !roomSearchBox) return;
+
+    let title = document.getElementById("quickToolsWeekdayTitle");
+    let row = document.getElementById("quickToolsWeekdayRow");
+
+    if (!title) {
+      title = document.createElement("div");
+      title.id = "quickToolsWeekdayTitle";
+      title.className = "admin-dashboard-subtitle";
+      title.innerText = "Choose day";
+      roomSearchBox.parentNode.insertBefore(title, roomSearchBox);
+    }
+
+    if (!row) {
+      row = document.createElement("div");
+      row.id = "quickToolsWeekdayRow";
+      row.className = "weekday-row";
+      title.parentNode.insertBefore(row, title.nextSibling);
+    }
+
+    row.innerHTML = "";
+    weekdays.forEach(function(day) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.innerText = day.label;
+      button.classList.toggle("active-day", selectedMainDoorWeekday === day.key);
+      button.onclick = function() {
+        window.setQuickToolsWeekday(day.key);
+      };
+      row.appendChild(button);
+    });
+  }
+
+  window.setQuickToolsWeekday = function(day) {
+    selectedMainDoorWeekday = day || "All";
+    ensureMainDoorWeekdayControls();
+  };
+
+  const previousOpenQuickToolsView = window.openQuickToolsView;
+  if (typeof previousOpenQuickToolsView === "function") {
+    window.openQuickToolsView = async function() {
+      const result = await previousOpenQuickToolsView.apply(this, arguments);
+      selectedMainDoorWeekday = "All";
+      ensureMainDoorWeekdayControls();
+      return result;
+    };
+  }
+
+  ensureMainDoorWeekdayControls();
+  window.setTimeout(ensureMainDoorWeekdayControls, 0);
 })();
