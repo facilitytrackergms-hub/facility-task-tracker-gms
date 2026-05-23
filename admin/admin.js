@@ -11,7 +11,7 @@ await import(ADMIN_CORE_SCRIPT);
 ========================== */
 
 (function patchMainDoorFlow() {
-  const PATCH_VERSION = "Updated: 2026-05-22 9:48 PM | admin.js";
+  const PATCH_VERSION = "Updated: 2026-05-22 9:54 PM | admin.js";
   const FIRESTORE_REST_API_KEY = "AIzaSyBgq_ooBeEN4noEyIxYPLVokgM6RjCO648";
   const AREAS_REST_URL = "https://firestore.googleapis.com/v1/projects/gms-task-tracker/databases/(default)/documents/areas";
   const FILTER_STORAGE_KEY = "mainDoorFilterState";
@@ -455,8 +455,12 @@ await import(ADMIN_CORE_SCRIPT);
     }
 
     if (tools) {
-      tools.classList.add("hidden");
-      tools.innerHTML = "";
+      tools.classList.remove("hidden");
+      tools.innerHTML = '' +
+        '<button class="yellow" type="button" onclick="openQuickToolsMaintenance()">Maintenance Inspection</button>' +
+        '<button class="yellow" type="button" onclick="openQuickToolsRoomReport()">Room Report</button>' +
+        '<button class="yellow" type="button" onclick="openQuickToolsDailyReport()">Daily Report</button>' +
+        '<button class="yellow" type="button" onclick="openQuickToolsPtac()">PTAC</button>';
     }
 
     showMainDoorDetailsView();
