@@ -1503,3 +1503,31 @@
       font-size: 14px;
       line-height: 1.15;
     }
+
+
+/* =========================
+   99 - SAFE LOCAL ADMIN PATCH STYLE
+========================== */
+.active-quick-floor, .active-mode {
+  outline: 3px solid #111 !important;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.8) inset !important;
+}
+.quick-tools-selected-card {
+  background: #fff8d8;
+  border: 2px solid #f9a825;
+  border-radius: 14px;
+  padding: 10px;
+  margin: 10px 0;
+  font-weight: 900;
+  text-align: center;
+}
+.admin-safe-note {
+  background: #eef5ff;
+  border: 1px solid #90caf9;
+  border-radius: 12px;
+  padding: 9px;
+  margin: 8px 0;
+  font-size: 13px;
+  font-weight: 800;
+  color: #0d47a1;
+}
