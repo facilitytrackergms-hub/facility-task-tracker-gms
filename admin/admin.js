@@ -11,7 +11,7 @@ await import(ADMIN_CORE_SCRIPT);
 ========================== */
 
 (function patchQuickToolsFloorCommonAreaFilter() {
-  const QUICK_TOOLS_PATCH_VERSION = "Updated: 2026-05-22 8:35 PM | admin.js";
+  const QUICK_TOOLS_PATCH_VERSION = "Updated: 2026-05-22 8:39 PM | admin.js";
   const FIRESTORE_REST_API_KEY = "AIzaSyBgq_ooBeEN4noEyIxYPLVokgM6RjCO648";
   const AREAS_REST_URL = "https://firestore.googleapis.com/v1/projects/gms-task-tracker/databases/(default)/documents/areas";
 
@@ -57,13 +57,19 @@ await import(ADMIN_CORE_SCRIPT);
   }
 
   function getQuickToolsFloorNumberFromAssignment(assignment) {
-    const cleanAssignment = String(assignment || "").trim().toLowerCase();
-    if (cleanAssignment === "1") return "1";
-    if (cleanAssignment === "2") return "2";
-    if (cleanAssignment === "3") return "3";
-    if (cleanAssignment === "1stfloor") return "1";
-    if (cleanAssignment === "2ndfloor") return "2";
-    if (cleanAssignment === "3rdfloor") return "3";
+    const text = String(assignment || "").trim().toLowerCase();
+    const cleanAssignment = text.replace(/[^a-z0-9]+/g, "");
+
+    if (!cleanAssignment) return "";
+
+    if (["1", "1stfloor", "1floor", "floor1", "firstfloor", "first"].includes(cleanAssignment)) return "1";
+    if (["2", "2ndfloor", "2floor", "floor2", "secondfloor", "second"].includes(cleanAssignment)) return "2";
+    if (["3", "3rdfloor", "3floor", "floor3", "thirdfloor", "third"].includes(cleanAssignment)) return "3";
+
+    if (/\b1(st)?\b/.test(text) || text.includes("first")) return "1";
+    if (/\b2(nd)?\b/.test(text) || text.includes("second")) return "2";
+    if (/\b3(rd)?\b/.test(text) || text.includes("third")) return "3";
+
     return "";
   }
 
@@ -73,8 +79,8 @@ await import(ADMIN_CORE_SCRIPT);
     area.category = area.category || "";
     area.scheduleDay = area.scheduleDay || area.day || "daily";
     area.day = area.day || area.scheduleDay;
-    area.schedule = area.schedule || "";
-    area.floor = area.floor || floorAssignments[getQuickToolsFloorNumberFromAssignment(area.schedule)] || "";
+    area.schedule = area.schedule || area.assignment || area.assignedTo || "";
+    area.floor = area.floor || area.floorName || area.floorNumber || floorAssignments[getQuickToolsFloorNumberFromAssignment(area.schedule)] || "";
     return area;
   }
 
@@ -93,11 +99,16 @@ await import(ADMIN_CORE_SCRIPT);
 
   function getQuickToolsCommonAreaFloor(area) {
     return getQuickToolsFloorNumberFromAssignment(area.floor) ||
-      getQuickToolsFloorNumberFromAssignment(area.schedule);
+      getQuickToolsFloorNumberFromAssignment(area.floorName) ||
+      getQuickToolsFloorNumberFromAssignment(area.floorNumber) ||
+      getQuickToolsFloorNumberFromAssignment(area.schedule) ||
+      getQuickToolsFloorNumberFromAssignment(area.assignment) ||
+      getQuickToolsFloorNumberFromAssignment(area.assignedTo);
   }
 
   function getQuickToolsCommonAreaAssignment(area) {
     return String(area && area.schedule ? area.schedule : "").trim() ||
+      String(area && area.assignment ? area.assignment : "").trim() ||
       floorAssignments[String(quickToolsFilterState.floor || "1")] ||
       "1stfloor";
   }
