@@ -11,7 +11,7 @@ await import(ADMIN_CORE_SCRIPT);
 ========================== */
 
 (function patchMainDoorFlow() {
-  const PATCH_VERSION = "Updated: 2026-05-22 9:36 PM | admin.js";
+  const PATCH_VERSION = "Updated: 2026-05-22 9:41 PM | admin.js";
   const FIRESTORE_REST_API_KEY = "AIzaSyBgq_ooBeEN4noEyIxYPLVokgM6RjCO648";
   const AREAS_REST_URL = "https://firestore.googleapis.com/v1/projects/gms-task-tracker/databases/(default)/documents/areas";
   const FILTER_STORAGE_KEY = "mainDoorFilterState";
@@ -385,19 +385,26 @@ await import(ADMIN_CORE_SCRIPT);
     box.appendChild(msg);
   }
 
+  function getMainDoorRoomSearchText() {
+    const searchInput = document.getElementById("quickToolsRoomSearchInput");
+    return String(searchInput ? searchInput.value : "").replace(/\D/g, "");
+  }
+
   function roomMatchesFilters(area) {
     const state = getFilterState();
     const assignment = getAreaAssignment(area);
     const areaFloor = getAreaFloor(area);
     const areaDay = getAreaDay(area).toLowerCase();
     const category = String(area.category || "").trim();
-    const searchInput = document.getElementById("quickToolsRoomSearchInput");
-    const searchText = String(searchInput ? searchInput.value : "").replace(/\D/g, "");
+    const searchText = getMainDoorRoomSearchText();
     const roomKey = getRoomKey(area.areaName);
+
+    if (searchText) {
+      return roomKey.includes(searchText);
+    }
 
     if (state.schedule !== "All" && assignment !== state.schedule) return false;
     if (state.floor !== "All" && areaFloor !== state.floor) return false;
-    if (searchText && !roomKey.includes(searchText)) return false;
 
     if (state.weekday !== "All") {
       if (category === "Daily Room") return true;
@@ -626,7 +633,7 @@ await import(ADMIN_CORE_SCRIPT);
     setFilterState("floor", String(floor || "1"));
     clearSelection();
 
-    if (typeof originalSetQuickToolsFloor === "function" && getFilterState().type === "rooms") {
+    if (typeof originalSetQuickToolsFloor === "function" && getFilterState().type === "rooms" && !getMainDoorRoomSearchText()) {
       originalSetQuickToolsFloor.call(this, floor);
     }
 
@@ -634,7 +641,7 @@ await import(ADMIN_CORE_SCRIPT);
   };
 
   window.handleQuickToolsRoomSearch = function() {
-    if (typeof originalHandleQuickToolsRoomSearch === "function") {
+    if (typeof originalHandleQuickToolsRoomSearch === "function" && !getMainDoorRoomSearchText()) {
       originalHandleQuickToolsRoomSearch.apply(this, arguments);
     }
     clearSelection();
