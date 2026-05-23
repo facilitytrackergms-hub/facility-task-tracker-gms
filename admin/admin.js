@@ -11,7 +11,7 @@ await import(ADMIN_CORE_SCRIPT);
 ========================== */
 
 (function patchMainDoorHousekeepingDetails() {
-  const PATCH_VERSION = "Updated: 2026-05-22 9:56 PM | admin.js";
+  const PATCH_VERSION = "Updated: 2026-05-22 10:02 PM | admin.js";
   const FIRESTORE_REST_API_KEY = "AIzaSyBgq_ooBeEN4noEyIxYPLVokgM6RjCO648";
   const ROOM_SETTINGS_REST_URL = "https://firestore.googleapis.com/v1/projects/gms-task-tracker/databases/(default)/documents/room_settings";
   const TASK_OPTIONS = ["Clean", "Vac", "Fridge", "Bath", "Mop", "Toilet", "Sink", "Dust", "Bed", "AC Filter"];
