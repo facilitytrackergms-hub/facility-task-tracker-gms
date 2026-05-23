@@ -11,7 +11,7 @@ await import(ADMIN_CORE_SCRIPT);
 ========================== */
 
 (function patchMainDoorFlow() {
-  const PATCH_VERSION = "Updated: 2026-05-22 9:41 PM | admin.js";
+  const PATCH_VERSION = "Updated: 2026-05-22 9:48 PM | admin.js";
   const FIRESTORE_REST_API_KEY = "AIzaSyBgq_ooBeEN4noEyIxYPLVokgM6RjCO648";
   const AREAS_REST_URL = "https://firestore.googleapis.com/v1/projects/gms-task-tracker/databases/(default)/documents/areas";
   const FILTER_STORAGE_KEY = "mainDoorFilterState";
@@ -385,6 +385,97 @@ await import(ADMIN_CORE_SCRIPT);
     box.appendChild(msg);
   }
 
+  function ensureMainDoorDetailsView() {
+    let view = document.getElementById("mainDoorDetailsView");
+    if (view) return view;
+
+    const card = document.querySelector(".card");
+    if (!card) return null;
+
+    view = document.createElement("div");
+    view.id = "mainDoorDetailsView";
+    view.className = "hidden";
+    view.innerHTML = '' +
+      '<div class="admin-dashboard-title">Door Details</div>' +
+      '<div id="mainDoorDetailsTitle" class="quick-tools-selected-card">Choose a door</div>' +
+      '<div id="mainDoorDetailsMeta" class="quick-tools-selected-card">Door information will show here.</div>' +
+      '<div id="mainDoorDetailsTools" class="quick-tools-action-grid hidden"></div>' +
+      '<button class="back" type="button" onclick="backToMainDoorFromDoorDetails()">BACK</button>' +
+      '<div class="app-version-label">' + PATCH_VERSION + '</div>';
+
+    card.appendChild(view);
+    return view;
+  }
+
+  function showMainDoorDetailsView() {
+    const view = ensureMainDoorDetailsView();
+    if (!view) return;
+
+    document.querySelectorAll(".card > div[id]").forEach(function(section) {
+      section.classList.add("hidden");
+    });
+
+    view.classList.remove("hidden");
+  }
+
+  function openMainDoorDetailsShell(door) {
+    const cleanDoor = door || {};
+    const type = cleanDoor.type === "commonArea" ? "Common Area" : "Room";
+    const name = String(cleanDoor.name || "").trim();
+    const area = cleanDoor.area || {};
+    const rows = Array.isArray(cleanDoor.rows) ? cleanDoor.rows : [];
+    const view = ensureMainDoorDetailsView();
+    if (!view) return;
+
+    sessionStorage.setItem("mainDoorSelectedType", cleanDoor.type || "room");
+    sessionStorage.setItem("mainDoorSelectedRoom", cleanDoor.roomKey || "");
+    sessionStorage.setItem("mainDoorSelectedAreaId", String(area.id || ""));
+    sessionStorage.setItem("mainDoorSelectedAreaName", String(area.areaName || name));
+
+    const title = document.getElementById("mainDoorDetailsTitle");
+    const meta = document.getElementById("mainDoorDetailsMeta");
+    const tools = document.getElementById("mainDoorDetailsTools");
+
+    if (title) title.innerText = type + ": " + name;
+
+    if (meta) {
+      const parts = [];
+      const schedule = getAreaAssignment(area);
+      const floor = getAreaFloor(area);
+      const day = getAreaDay(area);
+      const category = String(area.category || "").trim();
+
+      if (schedule) parts.push("Schedule: " + schedule);
+      if (floor) parts.push("Floor: " + floor);
+      if (day) parts.push("Day: " + day);
+      if (category) parts.push("Category: " + category);
+      if (rows.length > 1) parts.push("Records: " + rows.length);
+
+      meta.innerText = parts.length ? parts.join(" | ") : "No details found yet.";
+    }
+
+    if (tools) {
+      tools.classList.add("hidden");
+      tools.innerHTML = "";
+    }
+
+    showMainDoorDetailsView();
+  }
+
+  window.backToMainDoorFromDoorDetails = function() {
+    if (typeof window.openQuickToolsView === "function") {
+      window.openQuickToolsView();
+      return;
+    }
+
+    document.querySelectorAll(".card > div[id]").forEach(function(section) {
+      section.classList.add("hidden");
+    });
+
+    const mainDoorView = document.getElementById("adminQuickToolsView");
+    if (mainDoorView) mainDoorView.classList.remove("hidden");
+  };
+
   function getMainDoorRoomSearchText() {
     const searchInput = document.getElementById("quickToolsRoomSearchInput");
     return String(searchInput ? searchInput.value : "").replace(/\D/g, "");
@@ -450,22 +541,15 @@ await import(ADMIN_CORE_SCRIPT);
 
   function selectMainDoorRoom(room) {
     const input = document.getElementById("quickToolsRoomSearchInput");
-    const label = document.getElementById("quickToolsSelectedLabel");
-    const actions = document.getElementById("quickToolsActionButtons");
-
     if (input) input.value = room.roomKey;
 
-    sessionStorage.setItem("mainDoorSelectedType", "room");
-    sessionStorage.setItem("mainDoorSelectedRoom", room.roomKey);
-    sessionStorage.setItem("mainDoorSelectedAreaId", String(room.area.id || ""));
-    sessionStorage.setItem("mainDoorSelectedAreaName", String(room.area.areaName || room.roomKey));
-
-    if (label) {
-      label.innerText = "Room " + room.roomKey;
-      label.classList.remove("hidden");
-    }
-
-    if (actions) actions.classList.remove("hidden");
+    openMainDoorDetailsShell({
+      type: "room",
+      name: "Room " + room.roomKey,
+      roomKey: room.roomKey,
+      area: room.area,
+      rows: room.rows
+    });
   }
 
   function drawRoomButtons() {
@@ -570,16 +654,12 @@ await import(ADMIN_CORE_SCRIPT);
       btn.className = "yellow";
       btn.innerHTML = '<span class="room-number">' + escapeMainDoorHtml(group.areaName) + '</span>';
       btn.onclick = function() {
-        sessionStorage.setItem("mainDoorSelectedType", "commonArea");
-        sessionStorage.setItem("mainDoorSelectedAreaId", String(choiceArea.id || ""));
-        sessionStorage.setItem("mainDoorSelectedAreaName", String(choiceArea.areaName || ""));
-        const label = document.getElementById("quickToolsSelectedLabel");
-        const actions = document.getElementById("quickToolsActionButtons");
-        if (label) {
-          label.innerText = group.areaName;
-          label.classList.remove("hidden");
-        }
-        if (actions) actions.classList.remove("hidden");
+        openMainDoorDetailsShell({
+          type: "commonArea",
+          name: group.areaName,
+          area: choiceArea,
+          rows: group.areas
+        });
       };
       box.appendChild(btn);
     });
@@ -592,6 +672,7 @@ await import(ADMIN_CORE_SCRIPT);
     ensureWeekdayControls();
     updateFilterButtons();
     updateVersionLabel();
+    ensureMainDoorDetailsView();
 
     try {
       await loadMainDoorAreas();
