@@ -11,7 +11,7 @@ await import(ADMIN_CORE_SCRIPT);
 ========================== */
 
 (function patchQuickToolsFloorCommonAreaFilter() {
-  const QUICK_TOOLS_PATCH_VERSION = "Updated: 2026-05-22 9:18 PM | admin.js";
+  const QUICK_TOOLS_PATCH_VERSION = "Updated: 2026-05-22 9:23 PM | admin.js";
   const FIRESTORE_REST_API_KEY = "AIzaSyBgq_ooBeEN4noEyIxYPLVokgM6RjCO648";
   const AREAS_REST_URL = "https://firestore.googleapis.com/v1/projects/gms-task-tracker/databases/(default)/documents/areas";
 
@@ -591,4 +591,105 @@ await import(ADMIN_CORE_SCRIPT);
 
   ensureMainDoorScheduleControls();
   window.setTimeout(ensureMainDoorScheduleControls, 0);
+})();
+
+/* =========================
+   43F - MAIN DOOR FILTER STATE MEMORY
+========================== */
+
+(function patchMainDoorFilterStateMemory() {
+  const STORAGE_KEY = "mainDoorFilterState";
+  const defaultState = {
+    schedule: "All",
+    type: "rooms",
+    floor: "1",
+    weekday: "All"
+  };
+
+  function loadState() {
+    try {
+      return Object.assign({}, defaultState, JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "{}"));
+    } catch (error) {
+      return Object.assign({}, defaultState);
+    }
+  }
+
+  function saveState() {
+    window.mainDoorFilterState = Object.assign({}, defaultState, window.mainDoorFilterState || {});
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(window.mainDoorFilterState));
+  }
+
+  function setStateValue(key, value) {
+    window.mainDoorFilterState = Object.assign({}, defaultState, window.mainDoorFilterState || {});
+    window.mainDoorFilterState[key] = value;
+    saveState();
+  }
+
+  function restoreMainDoorState() {
+    const state = Object.assign({}, defaultState, window.mainDoorFilterState || loadState());
+
+    if (typeof window.setQuickToolsSchedule === "function") {
+      window.setQuickToolsSchedule(state.schedule);
+    }
+
+    if (typeof window.setQuickToolsMode === "function") {
+      window.setQuickToolsMode(state.type);
+    }
+
+    if (typeof window.setQuickToolsFloor === "function") {
+      window.setQuickToolsFloor(state.floor);
+    }
+
+    if (typeof window.setQuickToolsWeekday === "function") {
+      window.setQuickToolsWeekday(state.weekday);
+    }
+  }
+
+  window.mainDoorFilterState = loadState();
+
+  const originalSetQuickToolsSchedule = window.setQuickToolsSchedule;
+  if (typeof originalSetQuickToolsSchedule === "function") {
+    window.setQuickToolsSchedule = function(schedule) {
+      setStateValue("schedule", schedule || "All");
+      return originalSetQuickToolsSchedule.apply(this, arguments);
+    };
+  }
+
+  const originalSetQuickToolsMode = window.setQuickToolsMode;
+  if (typeof originalSetQuickToolsMode === "function") {
+    window.setQuickToolsMode = function(type) {
+      setStateValue("type", type === "commonAreas" ? "commonAreas" : "rooms");
+      return originalSetQuickToolsMode.apply(this, arguments);
+    };
+  }
+
+  const originalSetQuickToolsFloor = window.setQuickToolsFloor;
+  if (typeof originalSetQuickToolsFloor === "function") {
+    window.setQuickToolsFloor = function(floor) {
+      if (floor !== "areas" && floor !== "commonAreas") {
+        setStateValue("floor", String(floor || "1"));
+      }
+      return originalSetQuickToolsFloor.apply(this, arguments);
+    };
+  }
+
+  const originalSetQuickToolsWeekday = window.setQuickToolsWeekday;
+  if (typeof originalSetQuickToolsWeekday === "function") {
+    window.setQuickToolsWeekday = function(day) {
+      setStateValue("weekday", day || "All");
+      return originalSetQuickToolsWeekday.apply(this, arguments);
+    };
+  }
+
+  const originalOpenQuickToolsView = window.openQuickToolsView;
+  if (typeof originalOpenQuickToolsView === "function") {
+    window.openQuickToolsView = async function() {
+      const result = await originalOpenQuickToolsView.apply(this, arguments);
+      window.mainDoorFilterState = loadState();
+      window.setTimeout(restoreMainDoorState, 0);
+      return result;
+    };
+  }
+
+  saveState();
 })();
