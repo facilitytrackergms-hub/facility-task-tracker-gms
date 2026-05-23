@@ -1507,3 +1507,59 @@
       font-size: 14px;
       line-height: 1.15;
     }
+
+/* =========================
+   99 - FINAL ADMIN BUTTON FIXES
+========================== */
+
+#adminTopButtons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 7px;
+  margin-top: 6px;
+}
+
+#adminTopButtons button {
+  width: 100%;
+  min-height: 48px;
+  margin: 0;
+  padding: 8px 4px;
+  font-size: 14px;
+  line-height: 1.05;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+#adminAssignmentButtons.admin-schedule-buttons {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+  margin: 6px 0 8px;
+}
+
+#adminAssignmentButtons.admin-schedule-buttons button {
+  width: 100%;
+  min-height: 34px;
+  margin: 0;
+  padding: 5px 1px;
+  background: #0d47a1;
+  color: white;
+  border: 1px solid #0d47a1;
+  font-size: 10px;
+  font-weight: 900;
+  border-radius: 9px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+#adminAssignmentButtons.admin-schedule-buttons button:first-child {
+  display: none !important;
+}
