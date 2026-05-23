@@ -11,7 +11,7 @@ await import(ADMIN_CORE_SCRIPT);
 ========================== */
 
 (function patchQuickToolsFloorCommonAreaFilter() {
-  const QUICK_TOOLS_PATCH_VERSION = "Updated: 2026-05-22 8:27 PM | admin.js";
+  const QUICK_TOOLS_PATCH_VERSION = "Updated: 2026-05-22 8:31 PM | admin.js";
   const FIRESTORE_REST_API_KEY = "AIzaSyBgq_ooBeEN4noEyIxYPLVokgM6RjCO648";
   const AREAS_REST_URL = "https://firestore.googleapis.com/v1/projects/gms-task-tracker/databases/(default)/documents/areas";
 
@@ -94,6 +94,12 @@ await import(ADMIN_CORE_SCRIPT);
   function getQuickToolsCommonAreaFloor(area) {
     return getQuickToolsFloorNumberFromAssignment(area.floor) ||
       getQuickToolsFloorNumberFromAssignment(area.schedule);
+  }
+
+  function getQuickToolsCommonAreaAssignment(area) {
+    return String(area && area.schedule ? area.schedule : "").trim() ||
+      floorAssignments[String(quickToolsFilterState.floor || "1")] ||
+      "1stfloor";
   }
 
   function isQuickToolsCommonArea(area) {
@@ -322,12 +328,17 @@ await import(ADMIN_CORE_SCRIPT);
       return;
     }
 
+    const assignment = getQuickToolsCommonAreaAssignment(area);
+    const day = String(area.scheduleDay || area.day || "daily").trim() || "daily";
+
     sessionStorage.setItem("adminStartView", "ScheduleEditor");
-    sessionStorage.setItem("adminOpenAssignment", String(area.schedule || ""));
+    sessionStorage.setItem("adminEditSource", "quickToolsCommonArea");
+    sessionStorage.setItem("adminOpenMode", "details");
+    sessionStorage.setItem("adminOpenAssignment", assignment);
     sessionStorage.setItem("adminOpenCategory", "Common Area");
     sessionStorage.setItem("adminOpenAreaId", String(area.id || ""));
     sessionStorage.setItem("adminOpenAreaName", String(area.areaName || ""));
-    sessionStorage.setItem("adminOpenDay", String(area.scheduleDay || area.day || "daily"));
+    sessionStorage.setItem("adminOpenDay", day);
     sessionStorage.removeItem("adminOpenTaskView");
 
     window.location.href = "admin.html#schedule-editor";
