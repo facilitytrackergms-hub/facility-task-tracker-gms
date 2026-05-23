@@ -11,7 +11,7 @@ await import(ADMIN_CORE_SCRIPT);
 ========================== */
 
 (function patchQuickToolsFloorCommonAreaFilter() {
-  const QUICK_TOOLS_PATCH_VERSION = "Updated: 2026-05-22 9:12 PM | admin.js";
+  const QUICK_TOOLS_PATCH_VERSION = "Updated: 2026-05-22 9:18 PM | admin.js";
   const FIRESTORE_REST_API_KEY = "AIzaSyBgq_ooBeEN4noEyIxYPLVokgM6RjCO648";
   const AREAS_REST_URL = "https://firestore.googleapis.com/v1/projects/gms-task-tracker/databases/(default)/documents/areas";
 
@@ -520,4 +520,75 @@ await import(ADMIN_CORE_SCRIPT);
 
   ensureMainDoorWeekdayControls();
   window.setTimeout(ensureMainDoorWeekdayControls, 0);
+})();
+
+/* =========================
+   43E - MAIN DOOR SCHEDULE BUTTONS
+========================== */
+
+(function patchMainDoorScheduleButtons() {
+  let selectedMainDoorSchedule = "All";
+  const schedules = [
+    { key: "All", label: "ALL" },
+    { key: "HK1", label: "HK1" },
+    { key: "HK2", label: "HK2" },
+    { key: "1stfloor", label: "1ST" },
+    { key: "2ndFloor", label: "2ND" },
+    { key: "3rdFloor", label: "3RD" },
+    { key: "Laundry", label: "LAUNDRY" }
+  ];
+
+  function ensureMainDoorScheduleControls() {
+    const view = document.getElementById("adminQuickToolsView");
+    const typeTitle = document.querySelector("#adminQuickToolsView .admin-dashboard-subtitle");
+    if (!view || !typeTitle) return;
+
+    let title = document.getElementById("quickToolsScheduleTitle");
+    let row = document.getElementById("quickToolsScheduleRow");
+
+    if (!title) {
+      title = document.createElement("div");
+      title.id = "quickToolsScheduleTitle";
+      title.className = "admin-dashboard-subtitle";
+      title.innerText = "Choose schedule";
+      typeTitle.parentNode.insertBefore(title, typeTitle);
+    }
+
+    if (!row) {
+      row = document.createElement("div");
+      row.id = "quickToolsScheduleRow";
+      row.className = "quick-tools-filter-row";
+      title.parentNode.insertBefore(row, title.nextSibling);
+    }
+
+    row.innerHTML = "";
+    schedules.forEach(function(schedule) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.innerText = schedule.label;
+      button.classList.toggle("active-quick-floor", selectedMainDoorSchedule === schedule.key);
+      button.onclick = function() {
+        window.setQuickToolsSchedule(schedule.key);
+      };
+      row.appendChild(button);
+    });
+  }
+
+  window.setQuickToolsSchedule = function(schedule) {
+    selectedMainDoorSchedule = schedule || "All";
+    ensureMainDoorScheduleControls();
+  };
+
+  const previousOpenQuickToolsView = window.openQuickToolsView;
+  if (typeof previousOpenQuickToolsView === "function") {
+    window.openQuickToolsView = async function() {
+      const result = await previousOpenQuickToolsView.apply(this, arguments);
+      selectedMainDoorSchedule = "All";
+      ensureMainDoorScheduleControls();
+      return result;
+    };
+  }
+
+  ensureMainDoorScheduleControls();
+  window.setTimeout(ensureMainDoorScheduleControls, 0);
 })();
