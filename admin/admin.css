@@ -1491,3 +1491,15 @@
       font-size: 14px;
       padding: 8px 4px;
     }
+
+    .quick-tools-area-buttons {
+      margin-top: 6px;
+    }
+
+    .quick-tools-area-buttons button {
+      min-height: 44px;
+      margin: 0;
+      padding: 8px 6px;
+      font-size: 14px;
+      line-height: 1.15;
+    }
