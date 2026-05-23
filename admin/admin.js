@@ -1,317 +1,525 @@
 /* =========================
-   11 - ADMIN CORE LOADER
+   01 - ADMIN.JS SAFE LOCAL BUILD
 ========================== */
 
-const ADMIN_CORE_SCRIPT = "https://cdn.jsdelivr.net/gh/facilitytrackergms-hub/facility-task-tracker-gms@076156074fe7ae0d27374b213fe0c1b2c4774ae4/admin/admin.js";
-
-await import(ADMIN_CORE_SCRIPT);
+const ADMIN_VERSION_LABEL = "Updated: 2026-05-22 11:15 PM | admin.js";
 
 /* =========================
-   43D - MAIN DOOR HOUSEKEEPING DETAILS
+   02 - LOCAL DATA
 ========================== */
 
-(function patchMainDoorHousekeepingDetails() {
-  const PATCH_VERSION = "Updated: 2026-05-22 10:02 PM | admin.js";
-  const FIRESTORE_REST_API_KEY = "AIzaSyBgq_ooBeEN4noEyIxYPLVokgM6RjCO648";
-  const ROOM_SETTINGS_REST_URL = "https://firestore.googleapis.com/v1/projects/gms-task-tracker/databases/(default)/documents/room_settings";
-  const TASK_OPTIONS = ["Clean", "Vac", "Fridge", "Bath", "Mop", "Toilet", "Sink", "Dust", "Bed", "AC Filter"];
-  let selectedTaskButtons = [];
-  let currentDoorKey = "";
+const ADMIN_SCHEDULES = ["HK1", "HK2", "1stfloor", "2ndFloor", "3rdFloor", "Laundry"];
+const ADMIN_FLOORS = {
+  "1": ["101", "102", "103", "104", "105", "106", "107", "108", "109"],
+  "2": ["201", "202", "203", "204", "205", "206", "207", "208", "209", "211", "219", "229"],
+  "3": ["301", "302", "303", "304", "305", "306", "307", "308", "309"]
+};
+const ADMIN_COMMON_AREAS = {
+  "1": ["Lobby", "Dining Room", "Kitchen", "Front Hall", "Public Restroom"],
+  "2": ["Second Floor Hall", "Activity Room", "Laundry Room", "Elevator Area"],
+  "3": ["Third Floor Hall", "Storage Room", "Elevator Area", "Common Restroom"]
+};
 
-  function makeDoorKey(value) {
-    return String(value || "")
-      .trim()
-      .toLowerCase()
-      .replace(/&/g, " and ")
-      .replace(/[^a-z0-9]+/g, "_")
-      .replace(/^_+|_+$/g, "")
-      .replace(/_+/g, "_") || "door";
-  }
+let adminCurrentSchedule = "";
+let adminCurrentCategory = "";
+let quickToolsMode = "rooms";
+let quickToolsFloor = "1";
+let quickToolsSelected = null;
+let appConfirmCallback = null;
+let appCancelCallback = null;
 
-  function getSelectedDoorInfo() {
-    const selectedType = sessionStorage.getItem("mainDoorSelectedType") || "room";
-    const selectedRoom = sessionStorage.getItem("mainDoorSelectedRoom") || "";
-    const selectedAreaName = sessionStorage.getItem("mainDoorSelectedAreaName") || "";
-    const selectedAreaId = sessionStorage.getItem("mainDoorSelectedAreaId") || "";
-    const doorName = selectedType === "room" && selectedRoom ? "Room " + selectedRoom : selectedAreaName;
-    const doorKey = selectedRoom || makeDoorKey(selectedAreaName || selectedAreaId || doorName);
+/* =========================
+   03 - BASIC HELPERS
+========================== */
 
-    return {
-      selectedType: selectedType,
-      selectedRoom: selectedRoom,
-      selectedAreaName: selectedAreaName,
-      selectedAreaId: selectedAreaId,
-      doorName: doorName || "Selected Door",
-      doorKey: doorKey
-    };
-  }
+function byId(id) {
+  return document.getElementById(id);
+}
 
-  function readFirestoreValue(value) {
-    if (!value) return "";
-    if (Object.prototype.hasOwnProperty.call(value, "stringValue")) return value.stringValue;
-    if (Object.prototype.hasOwnProperty.call(value, "booleanValue")) return value.booleanValue;
-    if (Object.prototype.hasOwnProperty.call(value, "integerValue")) return Number(value.integerValue);
-    if (Object.prototype.hasOwnProperty.call(value, "doubleValue")) return Number(value.doubleValue);
-    if (Object.prototype.hasOwnProperty.call(value, "arrayValue")) {
-      return (value.arrayValue.values || []).map(readFirestoreValue);
-    }
-    return "";
-  }
-
-  function toFirestoreFields(data) {
-    return {
-      roomKey: { stringValue: String(data.roomKey || "") },
-      roomName: { stringValue: String(data.roomName || "") },
-      doorType: { stringValue: String(data.doorType || "") },
-      isDaily: { booleanValue: !!data.isDaily },
-      isOccupied: { booleanValue: !!data.isOccupied },
-      residentStatus: { stringValue: String(data.residentStatus || "") },
-      hasDehumidifier: { booleanValue: !!data.hasDehumidifier },
-      hkTaskButtons: {
-        arrayValue: {
-          values: (data.hkTaskButtons || []).map(function(taskName) {
-            return { stringValue: String(taskName || "") };
-          })
-        }
-      },
-      updatedAt: { timestampValue: new Date().toISOString() },
-      updatedBy: { stringValue: "Admin Main Door" }
-    };
-  }
-
-  function setButtonActive(id, active) {
-    const btn = document.getElementById(id);
-    if (btn) btn.classList.toggle("active-quick-floor", !!active);
-  }
-
-  function getHousekeepingControls() {
-    return {
-      weeklyBtn: document.getElementById("mainDoorHkWeeklyBtn"),
-      dailyBtn: document.getElementById("mainDoorHkDailyBtn"),
-      occupiedBtn: document.getElementById("mainDoorHkOccupiedBtn"),
-      vacantBtn: document.getElementById("mainDoorHkVacantBtn"),
-      statusSelect: document.getElementById("mainDoorHkResidentStatus"),
-      dehumBtn: document.getElementById("mainDoorHkDehumBtn"),
-      taskBox: document.getElementById("mainDoorHkTaskButtons"),
-      message: document.getElementById("mainDoorHkMessage")
-    };
-  }
-
-  function drawTaskButtons() {
-    const controls = getHousekeepingControls();
-    if (!controls.taskBox) return;
-
-    controls.taskBox.innerHTML = "";
-    TASK_OPTIONS.forEach(function(taskName) {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.innerText = taskName;
-      btn.className = "yellow";
-      btn.classList.toggle("active-quick-floor", selectedTaskButtons.includes(taskName));
-      btn.onclick = function() {
-        if (selectedTaskButtons.includes(taskName)) {
-          selectedTaskButtons = selectedTaskButtons.filter(function(item) { return item !== taskName; });
-        } else {
-          selectedTaskButtons.push(taskName);
-        }
-        drawTaskButtons();
-      };
-      controls.taskBox.appendChild(btn);
-    });
-  }
-
-  function applyHousekeepingState(state) {
-    const isDaily = !!state.isDaily;
-    const isOccupied = state.isOccupied !== false;
-    const hasDehumidifier = !!state.hasDehumidifier;
-    const controls = getHousekeepingControls();
-
-    setButtonActive("mainDoorHkWeeklyBtn", !isDaily);
-    setButtonActive("mainDoorHkDailyBtn", isDaily);
-    setButtonActive("mainDoorHkOccupiedBtn", isOccupied);
-    setButtonActive("mainDoorHkVacantBtn", !isOccupied);
-    setButtonActive("mainDoorHkDehumBtn", hasDehumidifier);
-
-    if (controls.statusSelect) {
-      controls.statusSelect.value = state.residentStatus || "";
-      controls.statusSelect.disabled = !isOccupied;
-    }
-
-    selectedTaskButtons = Array.isArray(state.hkTaskButtons) ? state.hkTaskButtons.slice() : [];
-    drawTaskButtons();
-  }
-
-  async function loadHousekeepingDetails() {
-    const info = getSelectedDoorInfo();
-    const message = document.getElementById("mainDoorHkMessage");
-    currentDoorKey = info.doorKey;
-
-    if (message) message.innerText = "Loading housekeeping details...";
-
-    try {
-      const response = await fetch(ROOM_SETTINGS_REST_URL + "/" + encodeURIComponent(info.doorKey) + "?key=" + encodeURIComponent(FIRESTORE_REST_API_KEY), {
-        cache: "no-store"
-      });
-
-      if (!response.ok) {
-        applyHousekeepingState({
-          isDaily: false,
-          isOccupied: true,
-          residentStatus: "",
-          hasDehumidifier: false,
-          hkTaskButtons: []
-        });
-        if (message) message.innerText = "No saved housekeeping details yet.";
-        return;
-      }
-
-      const data = await response.json();
-      const fields = data.fields || {};
-      applyHousekeepingState({
-        isDaily: !!readFirestoreValue(fields.isDaily),
-        isOccupied: fields.isOccupied ? !!readFirestoreValue(fields.isOccupied) : true,
-        residentStatus: readFirestoreValue(fields.residentStatus),
-        hasDehumidifier: !!readFirestoreValue(fields.hasDehumidifier),
-        hkTaskButtons: readFirestoreValue(fields.hkTaskButtons) || []
-      });
-      if (message) message.innerText = "Housekeeping details loaded.";
-    } catch (error) {
-      if (message) message.innerText = "Could not load housekeeping details.";
-    }
-  }
-
-  function readCurrentHousekeepingState() {
-    const info = getSelectedDoorInfo();
-    const controls = getHousekeepingControls();
-    const isDaily = document.getElementById("mainDoorHkDailyBtn") && document.getElementById("mainDoorHkDailyBtn").classList.contains("active-quick-floor");
-    const isOccupied = document.getElementById("mainDoorHkOccupiedBtn") && document.getElementById("mainDoorHkOccupiedBtn").classList.contains("active-quick-floor");
-
-    return {
-      roomKey: info.doorKey,
-      roomName: info.doorName,
-      doorType: info.selectedType,
-      isDaily: !!isDaily,
-      isOccupied: !!isOccupied,
-      residentStatus: isOccupied && controls.statusSelect ? controls.statusSelect.value : "",
-      hasDehumidifier: document.getElementById("mainDoorHkDehumBtn") && document.getElementById("mainDoorHkDehumBtn").classList.contains("active-quick-floor"),
-      hkTaskButtons: selectedTaskButtons.slice()
-    };
-  }
-
-  async function saveHousekeepingDetails() {
-    const message = document.getElementById("mainDoorHkMessage");
-    const data = readCurrentHousekeepingState();
-
-    if (message) message.innerText = "Saving housekeeping details...";
-
-    try {
-      const response = await fetch(ROOM_SETTINGS_REST_URL + "/" + encodeURIComponent(data.roomKey) + "?key=" + encodeURIComponent(FIRESTORE_REST_API_KEY), {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fields: toFirestoreFields(data) })
-      });
-
-      if (!response.ok) throw new Error("Save failed.");
-
-      if (message) message.innerText = "Housekeeping details saved.";
-      if (typeof window.showAppMessage === "function") {
-        window.showAppMessage("Housekeeping details saved.", "Main Door");
-      }
-    } catch (error) {
-      if (message) message.innerText = "Could not save housekeeping details.";
-      if (typeof window.showAppMessage === "function") {
-        window.showAppMessage("Could not save housekeeping details.", "Main Door");
-      }
-    }
-  }
-
-  window.setMainDoorHkDailyMode = function(isDaily) {
-    setButtonActive("mainDoorHkWeeklyBtn", !isDaily);
-    setButtonActive("mainDoorHkDailyBtn", !!isDaily);
-  };
-
-  window.setMainDoorHkOccupied = function(isOccupied) {
-    const controls = getHousekeepingControls();
-    setButtonActive("mainDoorHkOccupiedBtn", !!isOccupied);
-    setButtonActive("mainDoorHkVacantBtn", !isOccupied);
-    if (controls.statusSelect) {
-      controls.statusSelect.disabled = !isOccupied;
-      if (!isOccupied) controls.statusSelect.value = "";
-    }
-  };
-
-  window.toggleMainDoorHkDehumidifier = function() {
-    const btn = document.getElementById("mainDoorHkDehumBtn");
-    if (btn) btn.classList.toggle("active-quick-floor");
-  };
-
-  window.saveMainDoorHousekeepingDetails = saveHousekeepingDetails;
-
-  function ensureHousekeepingDetailsSection() {
-    const view = document.getElementById("mainDoorDetailsView");
-    if (!view || view.classList.contains("hidden")) return;
-
-    let box = document.getElementById("mainDoorHousekeepingDetailsBox");
-    if (!box) {
-      const tools = document.getElementById("mainDoorDetailsTools");
-      box = document.createElement("div");
-      box.id = "mainDoorHousekeepingDetailsBox";
-      box.className = "quick-tools-selected-card";
-      box.innerHTML = '' +
-        '<div class="admin-dashboard-subtitle">Housekeeping Details</div>' +
-        '<div class="quick-tools-filter-row">' +
-          '<button id="mainDoorHkWeeklyBtn" type="button" onclick="setMainDoorHkDailyMode(false)">WEEKLY</button>' +
-          '<button id="mainDoorHkDailyBtn" type="button" onclick="setMainDoorHkDailyMode(true)">DAILY</button>' +
-        '</div>' +
-        '<div class="quick-tools-filter-row">' +
-          '<button id="mainDoorHkOccupiedBtn" type="button" onclick="setMainDoorHkOccupied(true)">OCCUPIED</button>' +
-          '<button id="mainDoorHkVacantBtn" type="button" onclick="setMainDoorHkOccupied(false)">VACANT</button>' +
-        '</div>' +
-        '<label>Resident Status</label>' +
-        '<select id="mainDoorHkResidentStatus">' +
-          '<option value="">None</option>' +
-          '<option value="Assisted">Assisted</option>' +
-          '<option value="Depending">Depending</option>' +
-          '<option value="Hospice">Hospice</option>' +
-        '</select>' +
-        '<div class="quick-tools-filter-row">' +
-          '<button id="mainDoorHkDehumBtn" type="button" onclick="toggleMainDoorHkDehumidifier()">DEHUMIDIFIER</button>' +
-        '</div>' +
-        '<div class="admin-dashboard-subtitle">Task Buttons</div>' +
-        '<div id="mainDoorHkTaskButtons" class="rooms-grid"></div>' +
-        '<button class="green" type="button" onclick="saveMainDoorHousekeepingDetails()">SAVE HOUSEKEEPING</button>' +
-        '<div id="mainDoorHkMessage" class="quick-tools-search-label"></div>';
-
-      if (tools && tools.parentNode) {
-        tools.parentNode.insertBefore(box, tools);
-      } else {
-        view.appendChild(box);
-      }
-    }
-
-    const info = getSelectedDoorInfo();
-    if (currentDoorKey !== info.doorKey) {
-      loadHousekeepingDetails();
-    }
-  }
-
-  function updateHousekeepingVersionLabel() {
-    document.querySelectorAll("#mainDoorDetailsView .app-version-label, #adminQuickToolsView .app-version-label").forEach(function(label) {
-      label.innerText = PATCH_VERSION;
-    });
-  }
-
-  const observer = new MutationObserver(function() {
-    ensureHousekeepingDetailsSection();
-    updateHousekeepingVersionLabel();
+function showOnly(viewId) {
+  document.querySelectorAll(".card > div[id]").forEach(function(view) {
+    view.classList.add("hidden");
   });
+  const view = byId(viewId);
+  if (view) view.classList.remove("hidden");
+}
 
-  observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
+function setText(id, text) {
+  const el = byId(id);
+  if (el) el.innerText = text;
+}
 
-  window.setInterval(function() {
-    ensureHousekeepingDetailsSection();
-    updateHousekeepingVersionLabel();
-  }, 800);
+function setValue(id, value) {
+  const el = byId(id);
+  if (el) el.value = value;
+}
 
-  updateHousekeepingVersionLabel();
-})();
+function clearBox(id) {
+  const el = byId(id);
+  if (el) el.innerHTML = "";
+}
+
+function makeButton(text, className, onClick) {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.innerText = text;
+  if (className) btn.className = className;
+  btn.onclick = onClick;
+  return btn;
+}
+
+function setActiveButton(id, active) {
+  const btn = byId(id);
+  if (btn) btn.classList.toggle("active-quick-floor", !!active);
+}
+
+function limitRoomInput(input) {
+  if (!input) return;
+  input.value = String(input.value || "").replace(/\D/g, "").slice(0, 3);
+}
+
+function openAdminDashboard() {
+  showOnly("adminView2");
+  drawAdminTopButtons();
+}
+
+/* =========================
+   04 - CUSTOM POPUP
+========================== */
+
+function showAppMessage(message, title, onConfirm, onCancel) {
+  const popup = byId("appMessagePopup");
+  setText("appMessageTitle", title || "Admin");
+  setText("appMessageText", message || "");
+  appConfirmCallback = typeof onConfirm === "function" ? onConfirm : null;
+  appCancelCallback = typeof onCancel === "function" ? onCancel : null;
+  if (popup) popup.classList.remove("hidden");
+}
+
+function confirmAppMessage() {
+  const popup = byId("appMessagePopup");
+  if (popup) popup.classList.add("hidden");
+  const cb = appConfirmCallback;
+  appConfirmCallback = null;
+  appCancelCallback = null;
+  if (cb) cb();
+}
+
+function cancelAppMessage() {
+  const popup = byId("appMessagePopup");
+  if (popup) popup.classList.add("hidden");
+  const cb = appCancelCallback;
+  appConfirmCallback = null;
+  appCancelCallback = null;
+  if (cb) cb();
+}
+
+/* =========================
+   05 - ADMIN DASHBOARD BUTTONS
+========================== */
+
+function drawAdminTopButtons() {
+  const box = byId("adminTopButtons");
+  if (!box) return;
+  box.innerHTML = "";
+  const buttons = [
+    ["1. Schedule Editor", "yellow", openScheduleEditor],
+    ["2. Main Door", "yellow", openQuickToolsMainDoor],
+    ["3. Room Safe Check", "yellow", openRoomSafeCheck],
+    ["4. Issues", "yellow", loadAllIssues],
+    ["5. Maintenance", "yellow", openMaintenanceDashboard],
+    ["6. PTAC", "yellow", openPtacDashboard],
+    ["7. Water Temp", "yellow", openWaterTemperatureView],
+    ["8. Employee View", "yellow", openEmployeeAccessDashboard]
+  ];
+  buttons.forEach(function(item) {
+    box.appendChild(makeButton(item[0], item[1], item[2]));
+  });
+}
+
+function setHousekeepingMode(mode) {
+  localStorage.setItem("adminHousekeepingMode", mode);
+  const two = mode === "two";
+  setActiveButton("modeTwoButton", two);
+  setActiveButton("modeThreeButton", !two);
+  showAppMessage(two ? "Mode 2 selected." : "Mode 3 selected.", "Schedule Mode");
+}
+
+function openReportChooser() {
+  showAppMessage("Choose Room Report or Daily Report from Main Door after selecting a room or common area.", "Room / Area Report");
+}
+
+function openEmployees() { showOnly("employeeAccessDashboardView"); }
+function openEmployeeAccessDashboard() { showOnly("employeeAccessDashboardView"); }
+function logout() { openAdminDashboard(); }
+
+/* =========================
+   06 - SCHEDULE EDITOR
+========================== */
+
+function openScheduleEditor() {
+  showOnly("adminScheduleEditorView");
+  const box = byId("adminAssignmentButtons");
+  if (!box) return;
+  box.innerHTML = "";
+  ADMIN_SCHEDULES.forEach(function(name) {
+    box.appendChild(makeButton(name, "yellow", function() {
+      adminCurrentSchedule = name;
+      openScheduleChoice(name);
+    }));
+  });
+}
+
+function exitScheduleEditorToAdmin() { openAdminDashboard(); }
+function changeAdminAssignment() {
+  const sel = byId("adminAssignmentSelect");
+  if (sel && sel.value) openScheduleChoice(sel.value);
+}
+function openScheduleChoice(name) {
+  adminCurrentSchedule = name;
+  showOnly("adminScheduleChoiceView");
+  setText("adminScheduleChoiceTitle", name + " Editor");
+  const box = byId("adminCategoryButtons");
+  if (!box) return;
+  box.innerHTML = "";
+  box.appendChild(makeButton("ROOMS", "yellow", function() { openAdminAreaList(name, "rooms"); }));
+  box.appendChild(makeButton("COMMON AREAS", "yellow", function() { openAdminAreaList(name, "commonAreas"); }));
+  box.appendChild(makeButton("DAILY ROOMS", "yellow", function() { openAdminAreaList(name, "dailyRooms"); }));
+  box.appendChild(makeButton("TASKS", "yellow", openAdminAreaTasks));
+}
+function backToScheduleEditorList() { openScheduleEditor(); }
+
+/* =========================
+   07 - AREA LIST AND EDIT
+========================== */
+
+function openAdminAreaList(schedule, category) {
+  adminCurrentSchedule = schedule || adminCurrentSchedule || "HK1";
+  adminCurrentCategory = category || "rooms";
+  showOnly("adminAreaView");
+  setText("adminAreaAssignmentTitle", adminCurrentSchedule);
+  setText("adminAreaModeLabel", adminCurrentCategory === "commonAreas" ? "Common Areas" : "Rooms");
+  setText("adminAreaTitle", adminCurrentCategory === "commonAreas" ? "Common Areas" : "Rooms");
+  drawAdminAreaButtons();
+}
+
+function drawAdminAreaButtons() {
+  const box = byId("adminAreaButtons");
+  if (!box) return;
+  box.innerHTML = "";
+  let items = [];
+  if (adminCurrentCategory === "commonAreas") {
+    items = Object.values(ADMIN_COMMON_AREAS).flat();
+  } else {
+    items = Object.values(ADMIN_FLOORS).flat();
+  }
+  const search = (byId("adminAreaSearchInput")?.value || "").toLowerCase();
+  items.filter(function(item) { return !search || String(item).toLowerCase().includes(search); }).forEach(function(item) {
+    box.appendChild(makeButton(String(item), "", function() { openAdminEditItem(item); }));
+  });
+}
+
+function searchAdminAreas() { drawAdminAreaButtons(); }
+function openAdminEditItem(name) {
+  showOnly("adminEditView");
+  setText("adminEditTitle", "Edit " + name);
+  setValue("adminEditAreaInput", name);
+  setValue("adminEditAssignmentInput", adminCurrentSchedule || "HK1");
+}
+function openNewAdminArea() { openAdminEditItem(""); }
+function saveAdminAreaOnly() { showAppMessage("Saved locally in this safe admin build.", "Save"); }
+function deleteAdminArea() { showAppMessage("Delete is disabled in this safe local build.", "Delete"); }
+function backToAdminAreas() { openAdminAreaList(adminCurrentSchedule, adminCurrentCategory); }
+function backToAdminAreaEdit() { showOnly("adminEditView"); }
+function backToAdminCategories() { openAdminDashboard(); }
+function changeAdminAreaScheduleDay() {}
+function setAdminAreaWeekday(day) { localStorage.setItem("adminAreaWeekday", day); }
+
+/* =========================
+   08 - MAIN DOOR
+========================== */
+
+function openQuickToolsMainDoor() {
+  showOnly("adminQuickToolsView");
+  drawQuickTools();
+}
+
+function setQuickToolsMode(mode) {
+  quickToolsMode = mode;
+  quickToolsSelected = null;
+  drawQuickTools();
+}
+
+function setQuickToolsFloor(floor) {
+  quickToolsFloor = String(floor || "1");
+  quickToolsSelected = null;
+  drawQuickTools();
+}
+
+function handleQuickToolsRoomSearch() { drawQuickTools(); }
+
+function drawQuickTools() {
+  setActiveButton("quickToolsRoomsButton", quickToolsMode === "rooms");
+  setActiveButton("quickToolsAreasButton", quickToolsMode === "commonAreas");
+  setActiveButton("quickToolsFloor1Button", quickToolsFloor === "1");
+  setActiveButton("quickToolsFloor2Button", quickToolsFloor === "2");
+  setActiveButton("quickToolsFloor3Button", quickToolsFloor === "3");
+
+  byId("quickToolsRoomSearchBox")?.classList.toggle("hidden", quickToolsMode !== "rooms");
+  byId("quickToolsAreaSearchBox")?.classList.toggle("hidden", quickToolsMode !== "commonAreas");
+  drawQuickToolRooms();
+  drawQuickToolAreas();
+  drawQuickToolsSelected();
+}
+
+function drawQuickToolRooms() {
+  const box = byId("quickToolsRoomButtons");
+  if (!box) return;
+  box.innerHTML = "";
+  if (quickToolsMode !== "rooms") return;
+  const search = String(byId("quickToolsRoomSearchInput")?.value || "").trim();
+  const rooms = ADMIN_FLOORS[quickToolsFloor] || [];
+  rooms.filter(function(room) { return !search || room.includes(search); }).forEach(function(room) {
+    box.appendChild(makeButton("Room " + room, "", function() {
+      quickToolsSelected = { type: "room", name: "Room " + room, key: room };
+      sessionStorage.setItem("mainDoorSelectedType", "room");
+      sessionStorage.setItem("mainDoorSelectedRoom", room);
+      drawQuickToolsSelected();
+    }));
+  });
+}
+
+function drawQuickToolAreas() {
+  const box = byId("quickToolsAreaButtons");
+  if (!box) return;
+  box.innerHTML = "";
+  if (quickToolsMode !== "commonAreas") return;
+  const areas = ADMIN_COMMON_AREAS[quickToolsFloor] || [];
+  areas.forEach(function(area) {
+    box.appendChild(makeButton(area, "", function() {
+      quickToolsSelected = { type: "commonArea", name: area, key: area.toLowerCase().replace(/[^a-z0-9]+/g, "_") };
+      sessionStorage.setItem("mainDoorSelectedType", "commonArea");
+      sessionStorage.setItem("mainDoorSelectedAreaName", area);
+      drawQuickToolsSelected();
+    }));
+  });
+}
+
+function drawQuickToolsSelected() {
+  const label = byId("quickToolsSelectedLabel");
+  const actions = byId("quickToolsActionButtons");
+  if (!label || !actions) return;
+  if (!quickToolsSelected) {
+    label.classList.add("hidden");
+    actions.classList.add("hidden");
+    label.innerHTML = "";
+    return;
+  }
+  label.classList.remove("hidden");
+  actions.classList.remove("hidden");
+  label.innerHTML = "Selected: " + quickToolsSelected.name + "<br><span class='admin-safe-note'>Use the yellow tools for this door.</span>";
+  const ptac = byId("quickToolsPtacButton");
+  if (ptac) ptac.classList.toggle("hidden", quickToolsSelected.type !== "room");
+}
+
+function openQuickToolsMaintenance() { openMaintenanceInspection(); }
+function openQuickToolsRoomReport() { showAppMessage("Room Report opened for " + (quickToolsSelected?.name || "selected door") + ".", "Room Report"); }
+function openQuickToolsDailyReport() { showAppMessage("Daily Report opened for " + (quickToolsSelected?.name || "selected door") + ".", "Daily Report"); }
+function openQuickToolsPtac() { openPtacDashboard(); }
+
+/* =========================
+   09 - WATER TEMP / ROOM SAFE / ISSUES
+========================== */
+
+function openWaterTemperatureView() {
+  showOnly("waterTemperatureView");
+  drawWaterTemperatureGrid();
+}
+function drawWaterTemperatureGrid() {
+  const box = byId("waterTemperatureGrid");
+  if (!box) return;
+  box.innerHTML = "";
+  Object.values(ADMIN_FLOORS).flat().slice(0, 18).forEach(function(room) {
+    box.appendChild(makeButton(room, "", function() { showAppMessage("Water temperature marked for Room " + room + ".", "Water Temp"); }));
+  });
+}
+function setWaterTemperatureFloorFilter(floor) { quickToolsFloor = String(floor); drawWaterTemperatureGrid(); }
+function toggleWaterTemperatureSummary() { byId("waterTemperatureUsedLabel")?.classList.toggle("hidden"); }
+
+function openRoomSafeCheck() {
+  showOnly("roomSafeCheckView");
+  drawRoomSafeCheck();
+}
+function drawRoomSafeCheck() {
+  const all = byId("roomSafeAllList");
+  const found = byId("roomSafeFoundList");
+  const missing = byId("roomSafeMissingList");
+  if (all) all.innerHTML = Object.values(ADMIN_FLOORS).flat().map(r => "<button type='button'>" + r + "</button>").join("");
+  if (found) found.innerHTML = "";
+  if (missing) missing.innerHTML = "";
+}
+function openRoomSafeAddRoom() { byId("roomSafeAddBox")?.classList.remove("hidden"); }
+function cancelRoomSafeAddRoom() { byId("roomSafeAddBox")?.classList.add("hidden"); }
+function saveRoomSafeAddedRoom() { cancelRoomSafeAddRoom(); showAppMessage("Room added locally.", "Room Safe"); }
+function changeRoomSafeDayFilter() {}
+function changeRoomSafeTypeFilter() {}
+function clearRoomSafeFilters() { setValue("roomSafeDayFilter", "All"); }
+
+function loadAllIssues() { showOnly("adminIssueReasonsView"); drawIssueReasonList(); }
+function loadFilteredIssues() { loadAllIssues(); }
+function drawIssueList() { loadAllIssues(); }
+function addIssueReason() { showAppMessage("Issue reason added locally.", "Issues"); }
+function drawIssueReasonList() {
+  const box = byId("issueReasonList");
+  if (box) box.innerHTML = "<div class='admin-safe-note'>No saved issue reasons loaded in this safe local build.</div>";
+}
+
+/* =========================
+   10 - MAINTENANCE / PTAC / LAUNDRY PLACEHOLDERS
+========================== */
+
+function openMaintenanceDashboard() { showOnly("adminMaintenanceInspectionView"); }
+function openMaintenanceInspection() { showOnly("adminMaintenanceInspectionView"); }
+function openMaintenanceInspectionReport() { showAppMessage("Maintenance report view is ready for connection.", "Maintenance"); }
+function openMaintenanceWorkBoard() { showAppMessage("Maintenance work board is ready for connection.", "Maintenance"); }
+function openMaintenanceMaterialsNeeded() { showAppMessage("Materials needed view is ready for connection.", "Maintenance"); }
+function openMaintenanceInspectionStartPopup() { byId("maintenanceStartPopup")?.classList.remove("hidden"); }
+function cancelMaintenanceInspectionStartPopup() { byId("maintenanceStartPopup")?.classList.add("hidden"); }
+function confirmMaintenanceInspectionStartPopup() { cancelMaintenanceInspectionStartPopup(); showAppMessage("Inspection started.", "Maintenance"); }
+function chooseMaintenanceInspectionSearchType(type) { byId("maintenanceStartInputBox")?.classList.remove("hidden"); }
+function handleMaintenanceStartInput() {}
+function handleMaintenanceInspectionSearchInput() {}
+function handleMaintenanceInspectionReportInput() {}
+function refreshMaintenanceInspectionReport() {}
+function openMaintenanceInspectionResultPopup() { byId("maintenanceResultPopup")?.classList.remove("hidden"); }
+function closeMaintenanceInspectionResultPopup() { byId("maintenanceResultPopup")?.classList.add("hidden"); }
+function chooseMaintenanceInspectionResult(result) { closeMaintenanceInspectionResultPopup(); showAppMessage("Inspection marked " + result + ".", "Maintenance"); }
+function selectMaintenanceResidentStatus(status) { showAppMessage("Resident status: " + status, "Maintenance"); }
+function selectMaintenanceUrgency(level) { ["Low","Med","High"].forEach(l => setActiveButton("maintenanceUrgency" + l + "Btn", l === level)); }
+function changeMaintenanceInspectionItem() {}
+function openMaintenanceNewItemPopup() { showAppMessage("Add item popup placeholder.", "Maintenance"); }
+function deleteSelectedMaintenanceInspectionItem() { showAppMessage("Delete item disabled in safe build.", "Maintenance"); }
+function openMaintenanceNewReasonPopup() { showAppMessage("Add reason popup placeholder.", "Maintenance"); }
+function deleteSelectedMaintenanceInspectionReason() { showAppMessage("Delete reason disabled in safe build.", "Maintenance"); }
+function selectMaintenanceInspectionReason(value) {}
+function openMaintenanceMaterialsPopup() { showAppMessage("Materials popup placeholder.", "Maintenance"); }
+function selectMaintenanceInspectionMaterial(value) {}
+function openMaintenanceManualMaterialPopup() { byId("maintenanceManualMaterialPopup")?.classList.remove("hidden"); }
+function cancelMaintenanceManualMaterialPopup() { byId("maintenanceManualMaterialPopup")?.classList.add("hidden"); }
+function confirmMaintenanceManualMaterialPopup() { cancelMaintenanceManualMaterialPopup(); showAppMessage("Material saved locally.", "Maintenance"); }
+function selectMaintenanceManualMaterialLocation(location) {}
+function deleteSelectedMaintenanceInspectionMaterial() { showAppMessage("Delete material disabled in safe build.", "Maintenance"); }
+function openMaintenanceTextPopup() { byId("maintenanceTextPopup")?.classList.remove("hidden"); }
+function cancelMaintenanceTextPopup() { byId("maintenanceTextPopup")?.classList.add("hidden"); }
+function confirmMaintenanceTextPopup() { cancelMaintenanceTextPopup(); showAppMessage("Saved.", "Maintenance"); }
+
+function openPtacDashboard() { showOnly("adminPtacView"); }
+function openPtacFromEmployeeDashboard() { openPtacDashboard(); }
+function openPtacFloor(floor) { showAppMessage("PTAC floor " + floor + " selected.", "PTAC"); }
+function openPtacRoom(room) { showAppMessage("PTAC room opened.", "PTAC"); }
+function openPtacRoomFromSearch() { showAppMessage("PTAC room opened from search.", "PTAC"); }
+function handlePtacQuickSearch() {}
+function openPtacHistory() { showAppMessage("PTAC history ready for connection.", "PTAC"); }
+function openPtacNotes() { showAppMessage("PTAC notes ready for connection.", "PTAC"); }
+function openPtacQueue(status) { showAppMessage("PTAC queue: " + status, "PTAC"); }
+function savePtacStatus(status) { showAppMessage("PTAC status saved: " + status, "PTAC"); }
+function confirmPtacReset() { showAppMessage("PTAC reset confirmed.", "PTAC"); }
+
+function changeLaundryScheduleCategory() {}
+function loadLaundryScheduleRooms() {}
+function drawLaundryScheduleRooms() {}
+function clearLaundryRoomSelection() {}
+function selectAllLaundryRooms() {}
+function saveLaundryScheduleChanges() { showAppMessage("Laundry schedule saved locally.", "Laundry"); }
+
+/* =========================
+   11 - TASKS / EMPLOYEES STUBS
+========================== */
+
+function openAdminAreaTasks() { showAppMessage("Task tools ready for connection.", "Tasks"); }
+function searchAdminAreaTasks() {}
+function openNewAdminSubTask() { showAppMessage("Add task placeholder.", "Tasks"); }
+function saveAdminSubTask() { showAppMessage("Task saved locally.", "Tasks"); }
+function saveAdminSubTaskToAllWeeklyRooms() { showAppMessage("Task saved to weekly rooms locally.", "Tasks"); }
+function deleteAdminSubTask() { showAppMessage("Delete task disabled in safe build.", "Tasks"); }
+function cancelAdminSubTaskEditor() { openAdminDashboard(); }
+function toggleAdminBulkTaskBox() { byId("adminBulkTaskBox")?.classList.toggle("hidden"); }
+function addCheckedTasksToAllAreas() { showAppMessage("Tasks added locally.", "Tasks"); }
+function deleteCheckedTasksFromAllAreas() { showAppMessage("Tasks deleted locally.", "Tasks"); }
+function addCheckedTasksToSingleArea() { showAppMessage("Task added locally.", "Tasks"); }
+function deleteCheckedTasksFromSingleArea() { showAppMessage("Task deleted locally.", "Tasks"); }
+
+function openNewEmployee() { showAppMessage("Add employee placeholder.", "Employees"); }
+function saveEmployee() { showAppMessage("Employee saved locally.", "Employees"); }
+function deleteEmployee() { showAppMessage("Delete employee disabled in safe build.", "Employees"); }
+function applyEmployeePermissionDefaultsFromInputs() {}
+function checkAssignmentCounts() { showAppMessage("Schedule counts checked locally.", "Employees"); }
+function openWeeklySchedulesFromEmployeeDashboard() { openScheduleEditor(); }
+
+/* =========================
+   12 - REPORT FLOW STUBS
+========================== */
+
+function changeRoomReportDate() {}
+function changeDailyReportDate() {}
+function changeDailyStatusDate() {}
+function handleRoomReportSearchKey(event) {}
+function handleDailyReportSearchKey(event) {}
+function handleReportRoomAutoInput(input, type) {}
+function openDehumidifierReassignment() { showAppMessage("Dehumidifier reassignment ready for connection.", "Dehumidifier"); }
+function backToReassignment() { openAdminDashboard(); }
+function changeReassignmentCategory() {}
+function changeReassignmentFrom() {}
+function changeReassignmentTo() {}
+function selectReassignmentArea(value) {}
+function saveSelectedReassignmentArea() { showAppMessage("Reassignment saved locally.", "Dehumidifier"); }
+function setReassignmentFromWeekday(day) {}
+function setReassignmentToWeekday(day) {}
+
+/* =========================
+   13 - EXPORT FUNCTIONS FOR HTML ONCLICK
+========================== */
+
+Object.assign(window, {
+  addCheckedTasksToAllAreas, addCheckedTasksToSingleArea, addIssueReason, applyEmployeePermissionDefaultsFromInputs,
+  backToAdminAreaEdit, backToAdminAreas, backToAdminCategories, backToReassignment, backToScheduleEditorList,
+  cancelAdminSubTaskEditor, cancelAppMessage, cancelMaintenanceInspectionStartPopup, cancelMaintenanceManualMaterialPopup,
+  cancelMaintenanceTextPopup, cancelRoomSafeAddRoom, changeAdminAreaScheduleDay, changeAdminAssignment, changeDailyReportDate,
+  changeDailyStatusDate, changeLaundryScheduleCategory, changeMaintenanceInspectionItem, changeReassignmentCategory,
+  changeReassignmentFrom, changeReassignmentTo, changeRoomReportDate, changeRoomSafeDayFilter, changeRoomSafeTypeFilter,
+  checkAssignmentCounts, chooseMaintenanceInspectionResult, chooseMaintenanceInspectionSearchType, clearLaundryRoomSelection,
+  clearRoomSafeFilters, closeMaintenanceInspectionResultPopup, confirmAppMessage, confirmMaintenanceInspectionStartPopup,
+  confirmMaintenanceManualMaterialPopup, confirmMaintenanceTextPopup, confirmPtacReset, deleteAdminArea, deleteAdminSubTask,
+  deleteCheckedTasksFromAllAreas, deleteCheckedTasksFromSingleArea, deleteEmployee, deleteSelectedMaintenanceInspectionItem,
+  deleteSelectedMaintenanceInspectionMaterial, deleteSelectedMaintenanceInspectionReason, drawDailyStatusList: function(){}, drawIssueList,
+  drawIssueReasonList, drawLaundryScheduleRooms, drawRoomSafeCheck, exitScheduleEditorToAdmin, handleDailyReportSearchKey,
+  handleMaintenanceInspectionReportInput, handleMaintenanceInspectionSearchInput, handleMaintenanceStartInput, handlePtacQuickSearch,
+  handleQuickToolsRoomSearch, handleReportRoomAutoInput, handleRoomReportSearchKey, limitRoomInput, loadAllIssues, loadFilteredIssues,
+  loadLaundryScheduleRooms, logout, openAdminAreaTasks, openDehumidifierReassignment, openEmployeeAccessDashboard, openEmployees,
+  openMaintenanceDashboard, openMaintenanceInspection, openMaintenanceInspectionReport, openMaintenanceInspectionResultPopup,
+  openMaintenanceInspectionStartPopup, openMaintenanceManualMaterialPopup, openMaintenanceMaterialsNeeded, openMaintenanceMaterialsPopup,
+  openMaintenanceNewItemPopup, openMaintenanceNewReasonPopup, openMaintenanceWorkBoard, openNewAdminArea, openNewAdminSubTask,
+  openNewEmployee, openPtacDashboard, openPtacFloor, openPtacFromEmployeeDashboard, openPtacHistory, openPtacNotes, openPtacQueue,
+  openPtacRoom, openPtacRoomFromSearch, openQuickToolsDailyReport, openQuickToolsMaintenance, openQuickToolsPtac,
+  openQuickToolsRoomReport, openReportChooser, openRoomSafeAddRoom, openRoomSafeCheck, openWaterTemperatureView,
+  openWeeklySchedulesFromEmployeeDashboard, refreshMaintenanceInspectionReport, saveAdminAreaOnly, saveAdminSubTask,
+  saveAdminSubTaskToAllWeeklyRooms, saveEmployee, saveLaundryScheduleChanges, savePtacStatus, saveRoomSafeAddedRoom,
+  saveSelectedReassignmentArea, searchAdminAreaTasks, searchAdminAreas, selectAllLaundryRooms, selectMaintenanceInspectionMaterial,
+  selectMaintenanceInspectionReason, selectMaintenanceManualMaterialLocation, selectMaintenanceResidentStatus, selectMaintenanceUrgency,
+  selectReassignmentArea, setAdminAreaWeekday, setHousekeepingMode, setQuickToolsFloor, setQuickToolsMode, setReassignmentFromWeekday,
+  setReassignmentToWeekday, setWaterTemperatureFloorFilter, showAppMessage, toggleAdminBulkTaskBox, toggleWaterTemperatureSummary
+});
+
+/* =========================
+   14 - STARTUP
+========================== */
+
+document.addEventListener("DOMContentLoaded", function() {
+  document.querySelectorAll(".app-version-label").forEach(function(el) {
+    if (el.innerText.includes("admin.html")) el.innerText = "Updated: 2026-05-22 11:15 PM | admin.html";
+  });
+  const mode = localStorage.getItem("adminHousekeepingMode") || "two";
+  setActiveButton("modeTwoButton", mode === "two");
+  setActiveButton("modeThreeButton", mode === "three");
+  drawAdminTopButtons();
+});
