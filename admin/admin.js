@@ -1,1505 +1,317 @@
 /* =========================
-       02 - GLOBAL STYLE
-    ========================== */
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f2f2f2;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      padding: 8px;
-    }
-
-    .card {
-      width: 100%;
-      max-width: 420px;
-      background: white;
-      border-radius: 18px;
-      padding: 12px;
-      box-shadow: 0 4px 18px rgba(0,0,0,0.18);
-    }
-
-    .view-tag {
-      display: inline-block;
-      background: black;
-      color: white;
-      padding: 4px 10px;
-      border-radius: 8px;
-      font-size: 12px;
-      margin-bottom: 6px;
-    }
-
-    .view-center {
-      text-align: center;
-    }
-
-    .admin-dashboard-title {
-      text-align: center;
-      font-size: 18px;
-      font-weight: 900;
-      letter-spacing: 0.4px;
-      color: white;
-      background: linear-gradient(135deg, #0d47a1, #1976d2);
-      border-radius: 14px;
-      padding: 7px 10px;
-      margin: 0 0 8px;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), 0 2px 8px rgba(13,71,161,0.25);
-    }
-
-    .admin-mode-toggle-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 7px;
-      margin: 0 0 8px;
-    }
-
-    .admin-mode-toggle-row button {
-      min-height: 38px;
-      font-size: 14px;
-      padding: 8px 6px;
-      margin: 0;
-      border-radius: 12px;
-      background: #e6e6e6;
-      color: #111;
-      border: 1px solid #bbb;
-    }
-
-    .admin-mode-toggle-row button.active-mode {
-      background: #0d47a1;
-      color: white;
-      border-color: #0d47a1;
-    }
-
-    .admin-dashboard-subtitle {
-      font-size: 13px;
-      font-weight: 900;
-      color: #333;
-      margin: 8px 0 4px;
-      line-height: 1.15;
-    }
-
-    .app-version-label {
-      text-align: center;
-      font-size: 11px;
-      font-weight: 900;
-      color: #777;
-      margin: 8px 0 0;
-    }
-
-
-    .admin-employee-shortcut {
-      margin: 0 0 8px;
-    }
-
-    .admin-employee-shortcut button {
-      min-height: 38px;
-      font-size: 14px;
-      padding: 8px 6px;
-      margin: 0;
-      border-radius: 12px;
-      background: #1565c0;
-      color: white;
-    }
-
-    h2, h3 {
-      text-align: center;
-      margin-top: 0;
-    }
-
-    h2 {
-      font-size: 22px;
-      margin-bottom: 8px;
-    }
-
-    h3 {
-      font-size: 18px;
-      margin-bottom: 8px;
-    }
-
-    label {
-      font-size: 15px;
-      font-weight: bold;
-    }
-
-    input, select, textarea {
-      width: 100%;
-      font-size: 18px;
-      padding: 10px;
-      margin: 6px 0 10px;
-      border-radius: 12px;
-      border: 1px solid #ccc;
-    }
-
-    textarea {
-      min-height: 70px;
-      resize: vertical;
-    }
-
-    button {
-      width: 100%;
-      border: none;
-      border-radius: 12px;
-      background: #1976d2;
-      color: white;
-      font-size: 17px;
-      font-weight: bold;
-      padding: 11px;
-      margin: 5px 0;
-      cursor: pointer;
-    }
-
-    .assignment-title {
-      text-align: center;
-      font-size: 17px;
-      font-weight: bold;
-      margin: 0 0 6px;
-    }
-
-    .mode-label {
-      text-align: center;
-      font-size: 13px;
-      font-weight: bold;
-      margin: -2px 0 8px;
-      color: #555;
-    }
-
-    .green {
-      background: #2e7d32 !important;
-      color: white !important;
-    }
-
-    .yellow {
-      background: #f9a825 !important;
-      color: black !important;
-    }
-
-    .orange {
-      background: #ef6c00 !important;
-      color: white !important;
-    }
-
-    .red {
-      background: #c62828 !important;
-      color: white !important;
-    }
-
-    .back {
-      background: #555 !important;
-      color: white !important;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    /* =========================
-       03 - BUTTON GRIDS
-    ========================== */
-
-    .rooms-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 7px;
-      margin-top: 8px;
-    }
-
-    .rooms-grid button {
-      width: 100%;
-      min-height: 58px;
-      font-size: 16px;
-      padding: 7px 5px;
-      line-height: 1.1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      border-radius: 12px;
-      margin: 0;
-    }
-
-    .room-number {
-      font-size: 21px;
-      font-weight: bold;
-      line-height: 1.1;
-    }
-
-    .room-counter {
-      font-size: 14px;
-      font-weight: bold;
-      margin-top: 2px;
-    }
-
-    .button-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 7px;
-      margin-top: 8px;
-    }
-
-    .button-row button {
-      font-size: 15px;
-      padding: 10px 6px;
-      margin: 0;
-    }
-
-    .admin-area-action-row {
-      margin: 8px 0 8px;
-    }
-
-    .admin-area-action-row button {
-      min-height: 44px;
-      font-size: 14px;
-      padding: 9px 6px;
-    }
-
-    #adminBulkTaskBox {
-      margin-top: 6px;
-    }
-
-    #adminAreaButtons {
-      margin-top: 8px;
-    }
-
-    .button-row-three {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 7px;
-      margin-top: 8px;
-    }
-
-    .button-row-three button {
-      font-size: 14px;
-      padding: 10px 4px;
-      margin: 0;
-    }
-
-    .employee-permission-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 7px;
-      margin: 6px 0 10px;
-    }
-
-    .employee-permission-item label {
-      display: block;
-      font-size: 10px;
-      font-weight: 900;
-      text-align: center;
-      line-height: 1.05;
-      margin: 0 0 3px;
-      color: #111;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .employee-permission-item select {
-      font-size: 13px;
-      font-weight: 900;
-      text-align: center;
-      text-align-last: center;
-      padding: 7px 4px;
-      margin: 0;
-      border-radius: 10px;
-      height: 36px;
-    }
-
-    .employee-permission-title {
-      margin: 8px 0 6px;
-      font-size: 17px;
-    }
-
-    .employee-permission-item select.permission-yes {
-      background: #2e7d32;
-      color: #fff;
-      border-color: #2e7d32;
-    }
-
-    .employee-permission-item select.permission-no {
-      background: #c62828;
-      color: #fff;
-      border-color: #c62828;
-    }
-
-
-    /* =========================
-       04 - EDIT CARDS
-    ========================== */
-
-    .task-card {
-      border: 1px solid #ccc;
-      border-radius: 14px;
-      padding: 10px;
-      margin: 8px 0;
-      background: #fafafa;
-    }
-
-
-    .workload-card {
-      border: 1px solid #ccc;
-      border-radius: 14px;
-      padding: 12px;
-      margin: 10px 0;
-      background: #fafafa;
-    }
-
-    .workload-card h3 {
-      margin: 0 0 10px;
-      text-align: left;
-      font-size: 20px;
-    }
-
-    .workload-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
-      border-bottom: 1px solid #ddd;
-      padding: 6px 0;
-      font-size: 16px;
-      font-weight: bold;
-    }
-
-    .workload-total {
-      font-size: 18px;
-      font-weight: bold;
-      text-align: center;
-      margin-top: 10px;
-      padding-top: 8px;
-    }
-
-    .check-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 6px;
-      margin: 8px 0;
-    }
-
-    .check-item {
-      border: 1px solid #ccc;
-      border-radius: 10px;
-      padding: 8px;
-      font-size: 15px;
-      font-weight: bold;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: #fafafa;
-    }
-
-    .check-item input {
-      width: auto;
-      margin: 0;
-    }
-
-    .task-check-list {
-      max-height: 240px;
-      overflow-y: auto;
-      padding-right: 2px;
-    }
-
-
-
-    .weekday-row {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 6px;
-      margin: 6px 0 6px;
-    }
-
-    .weekday-row button {
-      min-height: 36px;
-      font-size: 13px;
-      padding: 7px 3px;
-      margin: 0;
-      border-radius: 10px;
-      background: #e6e6e6;
-      color: #111;
-      border: 1px solid #bbb;
-    }
-
-    .weekday-row button.active-day {
-      background: #0d47a1;
-      color: white;
-      border-color: #0d47a1;
-    }
-
-    .reassign-showing-label {
-      text-align: center;
-      font-size: 15px;
-      font-weight: 900;
-      margin: 6px 0 8px;
-      color: #111;
-    }
-
-    .selected-reassign-area {
-      background: #0d47a1 !important;
-      color: white !important;
-      outline: 3px solid #111;
-    }
-
-    .reassign-to-preview-label {
-      text-align: center;
-      font-size: 14px;
-      font-weight: 900;
-      margin: 7px 0 5px;
-      color: #111;
-    }
-
-    .reassign-to-preview button {
-      background: #e6e6e6;
-      color: #111;
-      border: 1px solid #bbb;
-      cursor: default;
-    }
-
-    .laundry-room-list {
-      max-height: 260px;
-      overflow-y: auto;
-      padding-right: 2px;
-      margin-top: 8px;
-    }
-
-    .laundry-room-item {
-      border: 1px solid #ccc;
-      border-radius: 10px;
-      padding: 8px;
-      font-size: 15px;
-      font-weight: bold;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: #fafafa;
-      margin: 5px 0;
-    }
-
-    .laundry-room-item input {
-      width: auto;
-      margin: 0;
-    }
-
-    #adminMessage,
-    #adminTaskMessage,
-    #employeeMessage {
-      text-align: center;
-      font-size: 16px;
-      font-weight: bold;
-    }
-
-    .issue-card {
-      border: 1px solid #ccc;
-      border-radius: 14px;
-      padding: 10px;
-      margin: 8px 0;
-      background: #fafafa;
-    }
-
-    .issue-card h3 {
-      text-align: left;
-      margin: 0 0 6px;
-      font-size: 18px;
-    }
-
-    .issue-line {
-      font-size: 14px;
-      font-weight: bold;
-      margin: 3px 0;
-      color: #333;
-    }
-
-    .issue-note {
-      font-size: 14px;
-      margin: 6px 0;
-      line-height: 1.25;
-    }
-
-    .status-card {
-      border: 1px solid #ccc;
-      border-radius: 14px;
-      padding: 10px;
-      margin: 8px 0;
-      background: #fafafa;
-    }
-
-    .status-card h3 {
-      text-align: left;
-      margin: 0 0 6px;
-      font-size: 18px;
-    }
-
-    .status-line {
-      font-size: 14px;
-      font-weight: bold;
-      margin: 3px 0;
-      color: #333;
-    }
-
-    .status-task-line {
-      font-size: 13px;
-      margin: 3px 0;
-      line-height: 1.25;
-    }
-
-    .reason-card {
-      border: 1px solid #ccc;
-      border-radius: 14px;
-      padding: 10px;
-      margin: 8px 0;
-      background: #fafafa;
-    }
-
-    .reason-card h3 {
-      text-align: left;
-      margin: 0 0 6px;
-      font-size: 18px;
-    }
-
-    .reason-line {
-      font-size: 14px;
-      font-weight: bold;
-      margin: 3px 0;
-      color: #333;
-    }
-
-
-
-
-    .maintenance-selected-card {
-      border: 1px solid #ccc;
-      border-radius: 10px;
-      padding: 7px 9px;
-      margin: 6px 0 8px;
-      background: transparent;
-      color: #111;
-      text-align: center;
-      font-weight: 900;
-      box-shadow: none;
-    }
-
-    .maintenance-selected-room-number {
-      font-size: 18px;
-      line-height: 1.1;
-      text-align: center;
-    }
-
-    .maintenance-selected-room-label {
-      font-size: 12px;
-      margin-top: 3px;
-      color: #333;
-      text-align: center;
-      line-height: 1.25;
-    }
-
-    .maintenance-selected-settings {
-      font-size: 12px;
-      color: #333;
-      text-align: center;
-      line-height: 1.25;
-      margin-top: 3px;
-    }
-
-    .maintenance-pass-fail-row {
-      display: flex;
-      justify-content: center;
-      margin: 16px 0 18px;
-    }
-
-    .maintenance-pass-fail-row button {
-      width: min(72%, 320px);
-      min-height: 64px;
-      margin: 0;
-      padding: 12px 10px;
-      font-size: 22px;
-    }
-
-    .maintenance-urgency-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 7px;
-    }
-
-    .maintenance-urgency-row button {
-      min-height: 42px;
-      margin: 0;
-      padding: 7px 2px;
-      font-size: 14px;
-    }
-
-    .maintenance-hidden-status-controls {
-      display: none;
-    }
-
-    #maintenanceInspectionSearchInput {
-      text-align: center;
-      font-size: 32px;
-      font-weight: 900;
-      padding: 14px 10px;
-      margin: 4px 0 6px;
-      border: 2px solid #111;
-      min-height: 64px;
-    }
-
-    #maintenanceInspectionStartButton {
-      min-height: 58px;
-      margin: 4px 0 8px;
-      font-size: 20px;
-    }
-
-    #maintenanceStartInput,
-    #maintenanceStartAreaSelect,
-    #maintenanceManualMaterialSelect,
-    #maintenanceManualMaterialInput,
-    #maintenanceManualMaterialRoomInput,
-    #maintenanceManualMaterialAreaSelect {
-      width: 100%;
-      margin: 8px 0 10px;
-      font-size: 26px;
-      font-weight: 900;
-      text-align: center;
-      min-height: 58px;
-      border: 2px solid #111;
-    }
-
-    #maintenanceManualMaterialNote {
-      width: 100%;
-      min-height: 90px;
-      margin: 8px 0 10px;
-      font-size: 18px;
-      font-weight: 700;
-      padding: 10px;
-      border: 2px solid #111;
-      border-radius: 12px;
-    }
-
-    .maintenance-material-location-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 7px;
-      margin: 8px 0;
-    }
-
-    .maintenance-material-location-row button {
-      min-height: 42px;
-      margin: 0;
-      padding: 8px 3px;
-      font-size: 13px;
-    }
-
-    .maintenance-inline-row {
-      display: grid;
-      grid-template-columns: 1fr 58px 52px;
-      gap: 7px;
-      align-items: stretch;
-      margin: 4px 0 8px;
-    }
-
-    .maintenance-inline-row select,
-    .maintenance-inline-row input {
-      margin: 0;
-    }
-
-    .maintenance-inline-row button,
-    .maintenance-small-action {
-      margin: 0;
-      min-height: 46px;
-      font-size: 12px;
-      padding: 8px 4px;
-      background: #0d47a1;
-      color: white;
-    }
-
-    .maintenance-materials-label {
-      border: 1px solid #ccc;
-      border-radius: 12px;
-      padding: 8px 10px;
-      margin: 4px 0 8px;
-      font-size: 14px;
-      font-weight: 900;
-      color: #444;
-      background: #fafafa;
-      min-height: 34px;
-    }
-
-    .maintenance-section-label {
-      font-size: 15px;
-      font-weight: 900;
-      margin: 8px 0 3px;
-    }
-
-    .maintenance-summary-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 7px;
-      margin: 8px 0 10px;
-    }
-
-    .maintenance-summary-tile {
-      border: 1px solid #ccc;
-      border-radius: 12px;
-      padding: 8px 6px;
-      background: #fafafa;
-      text-align: center;
-      font-weight: 900;
-    }
-
-    .maintenance-summary-tile span {
-      display: block;
-      font-size: 22px;
-      margin-top: 2px;
-    }
-
-    .maintenance-status-pill {
-      display: inline-block;
-      padding: 4px 8px;
-      border-radius: 999px;
-      background: #e6e6e6;
-      font-size: 12px;
-      font-weight: 900;
-      margin-bottom: 5px;
-    }
-
-    .inspection-reason-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 7px;
-      margin: 0 0 10px;
-    }
-
-    .inspection-reason-grid button {
-      min-height: 38px;
-      font-size: 13px;
-      padding: 7px 4px;
-      margin: 0;
-      background: #e6e6e6;
-      color: #111;
-      border: 1px solid #bbb;
-    }
-
-    .inspection-reason-grid button.selected-inspection-reason {
-      background: #f9a825 !important;
-      color: #111 !important;
-      border-color: #111;
-    }
-
-
-    .admin-room-search-box {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 7px;
-      margin: 0 0 8px;
-      align-items: center;
-    }
-
-    .admin-room-search-box input {
-      margin: 0;
-      height: 46px;
-      font-size: 18px;
-      font-weight: 900;
-      text-align: center;
-    }
-
-    .admin-room-search-box button {
-      width: 104px;
-      height: 46px;
-      margin: 0;
-      font-size: 14px;
-      padding: 8px 5px;
-      background: #0d47a1;
-    }
-
-    .room-report-card {
-      border: 1px solid #ccc;
-      border-radius: 14px;
-      padding: 10px;
-      margin: 8px 0;
-      background: #fafafa;
-    }
-
-    .room-report-card h3 {
-      text-align: left;
-      margin: 0 0 6px;
-      font-size: 18px;
-    }
-
-    .room-report-main-title {
-      text-align: center !important;
-      font-size: 21px !important;
-      font-weight: 900;
-      margin: 2px 0 8px !important;
-      color: #111;
-    }
-
-    .room-report-line {
-      font-size: 14px;
-      font-weight: bold;
-      margin: 3px 0;
-      color: #333;
-    }
-
-    .room-report-task {
-      font-size: 13px;
-      margin: 3px 0;
-      line-height: 1.25;
-    }
-
-    .room-report-section-title {
-      text-align: center;
-      font-size: 16px;
-      font-weight: 900;
-      margin: 10px 0 6px;
-      color: #111;
-    }
-
-    .admin-report-button-row {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 7px;
-      margin: 0 0 8px;
-    }
-
-    .admin-report-button-row button {
-      min-height: 42px;
-      font-size: 14px;
-      padding: 9px 5px;
-      margin: 0;
-      background: #0d47a1;
-      color: white;
-      border-radius: 12px;
-    }
-
-    .daily-report-title {
-      text-align: center;
-      font-size: 26px;
-      font-weight: 900;
-      margin: 0 0 6px;
-      color: #111;
-    }
-
-    .daily-report-search-box {
-      margin: 0 0 10px;
-    }
-
-    .daily-report-search-box input {
-      text-align: center;
-      font-size: 28px;
-      font-weight: 900;
-      padding: 10px;
-      margin: 0;
-    }
-
-    .daily-report-date-box {
-      text-align: center;
-      margin: 0 0 10px;
-      text-align: center;
-      font-size: 18px;
-      font-weight: 900;
-      padding: 9px;
-      margin: 0 0 10px;
-    }
-
-    .daily-report-mode {
-      text-align: center;
-      font-size: 14px;
-      font-weight: 900;
-      color: #333;
-      margin: 0 0 10px;
-    }
-
-    .daily-report-card {
-      border: 1px solid #ccc;
-      border-radius: 16px;
-      padding: 10px;
-      margin: 9px 0;
-      background: #fafafa;
-    }
-
-    .daily-report-card-title {
-      text-align: center;
-      font-size: 18px;
-      font-weight: 900;
-      margin: 0 0 8px;
-      color: #111;
-    }
-
-    .daily-report-block-title {
-      font-size: 16px;
-      font-weight: 900;
-      margin: 8px 0 3px;
-      color: #111;
-    }
-
-    .daily-report-line {
-      font-size: 14px;
-      font-weight: bold;
-      line-height: 1.25;
-      margin: 2px 0;
-      color: #333;
-    }
-
-    .daily-report-issue-button {
-      min-height: 34px;
-      font-size: 13px;
-      padding: 7px 6px;
-      margin: 5px 0 0;
-      background: #f9a825;
-      color: #111;
-    }
-
-    .report-flow-date-box {
-      margin: 6px 0 10px;
-    }
-
-    .report-flow-date-box input {
-      margin: 0;
-      text-align: center;
-      font-weight: 900;
-    }
-
-
-
-
-
-
-
-    .room-safe-summary-card {
-      border: 2px solid #111;
-      border-radius: 16px;
-      padding: 12px;
-      margin: 8px 0 10px;
-      background: #fafafa;
-      text-align: center;
-    }
-
-    .room-safe-count {
-      font-size: 30px;
-      font-weight: 900;
-      margin: 2px 0 4px;
-      color: #111;
-    }
-
-    .room-safe-warning {
-      color: #c62828;
-      font-size: 17px;
-      font-weight: 900;
-      margin: 4px 0;
-    }
-
-    .room-safe-ok {
-      color: #2e7d32;
-      font-size: 17px;
-      font-weight: 900;
-      margin: 4px 0;
-    }
-
-    .room-safe-small {
-      font-size: 12px;
-      font-weight: 900;
-      color: #555;
-      line-height: 1.25;
-    }
-
-    .room-safe-room-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 6px;
-      margin: 8px 0;
-    }
-
-    .room-safe-room-pill {
-      border-radius: 10px;
-      padding: 8px 4px;
-      font-size: 15px;
-      font-weight: 900;
-      text-align: center;
-      background: #e8f5e9;
-      color: #111;
-      border: 1px solid #2e7d32;
-    }
-
-    .room-safe-room-pill.missing {
-      background: #ffebee;
-      color: #c62828;
-      border-color: #c62828;
-    }
-
-    .room-safe-add-box {
-      border: 1px solid #ccc;
-      border-radius: 14px;
-      padding: 10px;
-      margin: 8px 0 10px;
-      background: #fafafa;
-    }
-
-    .room-safe-add-box h3 {
-      margin: 0 0 8px;
-    }
-
-    .room-safe-filter-box {
-      border: 1px solid #ccc;
-      border-radius: 14px;
-      padding: 10px;
-      margin: 8px 0 10px;
-      background: #fafafa;
-    }
-
-    .room-safe-filter-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 7px;
-      margin: 0 0 8px;
-    }
-
-    .room-safe-filter-row select,
-    .room-safe-filter-row input {
-      margin: 0;
-      font-size: 14px;
-      font-weight: 900;
-      min-height: 42px;
-      padding: 8px 5px;
-      text-align: center;
-      text-align-last: center;
-    }
-
-.room-safe-list-title {
-  text-align: center;
-  font-size: 19px;
-  font-weight: 900;
-  margin: 12px 0 6px;
-  color: #c62828;
-}
-
-
-    /* =========================
-       04B - EMPLOYEE ACCESS DASHBOARD
-    ========================== */
-
-    .employee-access-title {
-      text-align: center;
-      font-size: 22px;
-      font-weight: 900;
-      color: white;
-      background: linear-gradient(135deg, #0d47a1, #1976d2);
-      border-radius: 16px;
-      padding: 10px;
-      margin: 0 0 8px;
-    }
-
-    .employee-access-subtitle {
-      text-align: center;
-      font-size: 14px;
-      font-weight: 900;
-      color: #333;
-      margin: 0 0 10px;
-      line-height: 1.25;
-    }
-
-    .employee-dashboard-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 8px;
-      margin: 8px 0;
-    }
-
-    .employee-dashboard-grid button {
-      min-height: 58px;
-      margin: 0;
-      border-radius: 14px;
-      font-size: 18px;
-      padding: 12px 8px;
-    }
-
-
-    /* =========================
-       04C - WATER TEMPERATURE
-    ========================== */
-
-    .water-temperature-header {
-      text-align: center;
-      font-size: 22px;
-      font-weight: 900;
-      color: white;
-      background: linear-gradient(135deg, #0d47a1, #1976d2);
-      border-radius: 16px;
-      padding: 10px;
-      margin: 0 0 8px;
-    }
-
-    .water-temperature-subtitle {
-      text-align: center;
-      font-size: 13px;
-      font-weight: 900;
-      color: #333;
-      margin: 0 0 8px;
-      line-height: 1.25;
-    }
-
-    .water-temperature-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 7px;
-      margin: 8px 0;
-    }
-
-    .water-temperature-actions button {
-      min-height: 42px;
-      margin: 0;
-      font-size: 14px;
-      padding: 8px 5px;
-    }
-    .water-temperature-filter-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 7px;
-  margin: 0 0 8px;
-}
-
-.water-temperature-filter-row button {
-  min-height: 38px;
-  margin: 0;
-  font-size: 13px;
-  padding: 8px 4px;
-  background: #0d47a1;
-  color: white;
-}
-.water-temperature-used-label {
-  text-align: center;
-  font-size: 15px;
-  font-weight: 900;
-  color: #c62828;
-  margin: 3px 0 8px;
-  line-height: 1.25;
-}
-    .water-temperature-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 7px;
-      margin: 8px 0;
-    }
-
-    .water-temperature-button {
-      min-height: 62px;
-      margin: 0;
-      padding: 7px 5px;
-      border-radius: 12px;
-      line-height: 1.1;
-      background: #7f8c8d;
-      color: white;
-    }
-
-    .water-temperature-button strong {
-      display: block;
-      font-size: 18px;
-      margin-bottom: 3px;
-    }
-
-    .water-temperature-button small {
-      display: block;
-      font-size: 12px;
-      font-weight: 900;
-      text-transform: uppercase;
-    }
-
-    .water-temperature-pass {
-      background: #2e7d32 !important;
-      color: white !important;
-    }
-
-    .water-temperature-low {
-      background: #1976d2 !important;
-      color: white !important;
-    }
-
-    .water-temperature-fail {
-      background: #c62828 !important;
-      color: white !important;
-    }
-
-
-    /* =========================
-       05 - LOADING SCREEN STYLE
-    ========================== */
-
-    .loading-bg {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(255,255,255,0.70);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 99999;
-    }
-
-    .spinner {
-      width: 70px;
-      height: 70px;
-      border: 8px solid #ddd;
-      border-top: 8px solid #1976d2;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-
-    @keyframes spin {
-      from {
-        transform: rotate(0deg);
+   11 - ADMIN CORE LOADER
+========================== */
+
+const ADMIN_CORE_SCRIPT = "https://cdn.jsdelivr.net/gh/facilitytrackergms-hub/facility-task-tracker-gms@076156074fe7ae0d27374b213fe0c1b2c4774ae4/admin/admin.js";
+
+await import(ADMIN_CORE_SCRIPT);
+
+/* =========================
+   43D - MAIN DOOR HOUSEKEEPING DETAILS
+========================== */
+
+(function patchMainDoorHousekeepingDetails() {
+  const PATCH_VERSION = "Updated: 2026-05-22 9:56 PM | admin.js";
+  const FIRESTORE_REST_API_KEY = "AIzaSyBgq_ooBeEN4noEyIxYPLVokgM6RjCO648";
+  const ROOM_SETTINGS_REST_URL = "https://firestore.googleapis.com/v1/projects/gms-task-tracker/databases/(default)/documents/room_settings";
+  const TASK_OPTIONS = ["Clean", "Vac", "Fridge", "Bath", "Mop", "Toilet", "Sink", "Dust", "Bed", "AC Filter"];
+  let selectedTaskButtons = [];
+  let currentDoorKey = "";
+
+  function makeDoorKey(value) {
+    return String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/&/g, " and ")
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "")
+      .replace(/_+/g, "_") || "door";
+  }
+
+  function getSelectedDoorInfo() {
+    const selectedType = sessionStorage.getItem("mainDoorSelectedType") || "room";
+    const selectedRoom = sessionStorage.getItem("mainDoorSelectedRoom") || "";
+    const selectedAreaName = sessionStorage.getItem("mainDoorSelectedAreaName") || "";
+    const selectedAreaId = sessionStorage.getItem("mainDoorSelectedAreaId") || "";
+    const doorName = selectedType === "room" && selectedRoom ? "Room " + selectedRoom : selectedAreaName;
+    const doorKey = selectedRoom || makeDoorKey(selectedAreaName || selectedAreaId || doorName);
+
+    return {
+      selectedType: selectedType,
+      selectedRoom: selectedRoom,
+      selectedAreaName: selectedAreaName,
+      selectedAreaId: selectedAreaId,
+      doorName: doorName || "Selected Door",
+      doorKey: doorKey
+    };
+  }
+
+  function readFirestoreValue(value) {
+    if (!value) return "";
+    if (Object.prototype.hasOwnProperty.call(value, "stringValue")) return value.stringValue;
+    if (Object.prototype.hasOwnProperty.call(value, "booleanValue")) return value.booleanValue;
+    if (Object.prototype.hasOwnProperty.call(value, "integerValue")) return Number(value.integerValue);
+    if (Object.prototype.hasOwnProperty.call(value, "doubleValue")) return Number(value.doubleValue);
+    if (Object.prototype.hasOwnProperty.call(value, "arrayValue")) {
+      return (value.arrayValue.values || []).map(readFirestoreValue);
+    }
+    return "";
+  }
+
+  function toFirestoreFields(data) {
+    return {
+      roomKey: { stringValue: String(data.roomKey || "") },
+      roomName: { stringValue: String(data.roomName || "") },
+      doorType: { stringValue: String(data.doorType || "") },
+      isDaily: { booleanValue: !!data.isDaily },
+      isOccupied: { booleanValue: !!data.isOccupied },
+      residentStatus: { stringValue: String(data.residentStatus || "") },
+      hasDehumidifier: { booleanValue: !!data.hasDehumidifier },
+      hkTaskButtons: {
+        arrayValue: {
+          values: (data.hkTaskButtons || []).map(function(taskName) {
+            return { stringValue: String(taskName || "") };
+          })
+        }
+      },
+      updatedAt: { timestampValue: new Date().toISOString() },
+      updatedBy: { stringValue: "Admin Main Door" }
+    };
+  }
+
+  function setButtonActive(id, active) {
+    const btn = document.getElementById(id);
+    if (btn) btn.classList.toggle("active-quick-floor", !!active);
+  }
+
+  function getHousekeepingControls() {
+    return {
+      weeklyBtn: document.getElementById("mainDoorHkWeeklyBtn"),
+      dailyBtn: document.getElementById("mainDoorHkDailyBtn"),
+      occupiedBtn: document.getElementById("mainDoorHkOccupiedBtn"),
+      vacantBtn: document.getElementById("mainDoorHkVacantBtn"),
+      statusSelect: document.getElementById("mainDoorHkResidentStatus"),
+      dehumBtn: document.getElementById("mainDoorHkDehumBtn"),
+      taskBox: document.getElementById("mainDoorHkTaskButtons"),
+      message: document.getElementById("mainDoorHkMessage")
+    };
+  }
+
+  function drawTaskButtons() {
+    const controls = getHousekeepingControls();
+    if (!controls.taskBox) return;
+
+    controls.taskBox.innerHTML = "";
+    TASK_OPTIONS.forEach(function(taskName) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.innerText = taskName;
+      btn.className = "yellow";
+      btn.classList.toggle("active-quick-floor", selectedTaskButtons.includes(taskName));
+      btn.onclick = function() {
+        if (selectedTaskButtons.includes(taskName)) {
+          selectedTaskButtons = selectedTaskButtons.filter(function(item) { return item !== taskName; });
+        } else {
+          selectedTaskButtons.push(taskName);
+        }
+        drawTaskButtons();
+      };
+      controls.taskBox.appendChild(btn);
+    });
+  }
+
+  function applyHousekeepingState(state) {
+    const isDaily = !!state.isDaily;
+    const isOccupied = state.isOccupied !== false;
+    const hasDehumidifier = !!state.hasDehumidifier;
+    const controls = getHousekeepingControls();
+
+    setButtonActive("mainDoorHkWeeklyBtn", !isDaily);
+    setButtonActive("mainDoorHkDailyBtn", isDaily);
+    setButtonActive("mainDoorHkOccupiedBtn", isOccupied);
+    setButtonActive("mainDoorHkVacantBtn", !isOccupied);
+    setButtonActive("mainDoorHkDehumBtn", hasDehumidifier);
+
+    if (controls.statusSelect) {
+      controls.statusSelect.value = state.residentStatus || "";
+      controls.statusSelect.disabled = !isOccupied;
+    }
+
+    selectedTaskButtons = Array.isArray(state.hkTaskButtons) ? state.hkTaskButtons.slice() : [];
+    drawTaskButtons();
+  }
+
+  async function loadHousekeepingDetails() {
+    const info = getSelectedDoorInfo();
+    const message = document.getElementById("mainDoorHkMessage");
+    currentDoorKey = info.doorKey;
+
+    if (message) message.innerText = "Loading housekeeping details...";
+
+    try {
+      const response = await fetch(ROOM_SETTINGS_REST_URL + "/" + encodeURIComponent(info.doorKey) + "?key=" + encodeURIComponent(FIRESTORE_REST_API_KEY), {
+        cache: "no-store"
+      });
+
+      if (!response.ok) {
+        applyHousekeepingState({
+          isDaily: false,
+          isOccupied: true,
+          residentStatus: "",
+          hasDehumidifier: false,
+          hkTaskButtons: []
+        });
+        if (message) message.innerText = "No saved housekeeping details yet.";
+        return;
       }
 
-      to {
-        transform: rotate(360deg);
+      const data = await response.json();
+      const fields = data.fields || {};
+      applyHousekeepingState({
+        isDaily: !!readFirestoreValue(fields.isDaily),
+        isOccupied: fields.isOccupied ? !!readFirestoreValue(fields.isOccupied) : true,
+        residentStatus: readFirestoreValue(fields.residentStatus),
+        hasDehumidifier: !!readFirestoreValue(fields.hasDehumidifier),
+        hkTaskButtons: readFirestoreValue(fields.hkTaskButtons) || []
+      });
+      if (message) message.innerText = "Housekeeping details loaded.";
+    } catch (error) {
+      if (message) message.innerText = "Could not load housekeeping details.";
+    }
+  }
+
+  function readCurrentHousekeepingState() {
+    const info = getSelectedDoorInfo();
+    const controls = getHousekeepingControls();
+    const isDaily = document.getElementById("mainDoorHkDailyBtn") && document.getElementById("mainDoorHkDailyBtn").classList.contains("active-quick-floor");
+    const isOccupied = document.getElementById("mainDoorHkOccupiedBtn") && document.getElementById("mainDoorHkOccupiedBtn").classList.contains("active-quick-floor");
+
+    return {
+      roomKey: info.doorKey,
+      roomName: info.doorName,
+      doorType: info.selectedType,
+      isDaily: !!isDaily,
+      isOccupied: !!isOccupied,
+      residentStatus: isOccupied && controls.statusSelect ? controls.statusSelect.value : "",
+      hasDehumidifier: document.getElementById("mainDoorHkDehumBtn") && document.getElementById("mainDoorHkDehumBtn").classList.contains("active-quick-floor"),
+      hkTaskButtons: selectedTaskButtons.slice()
+    };
+  }
+
+  async function saveHousekeepingDetails() {
+    const message = document.getElementById("mainDoorHkMessage");
+    const data = readCurrentHousekeepingState();
+
+    if (message) message.innerText = "Saving housekeeping details...";
+
+    try {
+      const response = await fetch(ROOM_SETTINGS_REST_URL + "/" + encodeURIComponent(data.roomKey) + "?key=" + encodeURIComponent(FIRESTORE_REST_API_KEY), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fields: toFirestoreFields(data) })
+      });
+
+      if (!response.ok) throw new Error("Save failed.");
+
+      if (message) message.innerText = "Housekeeping details saved.";
+      if (typeof window.showAppMessage === "function") {
+        window.showAppMessage("Housekeeping details saved.", "Main Door");
+      }
+    } catch (error) {
+      if (message) message.innerText = "Could not save housekeeping details.";
+      if (typeof window.showAppMessage === "function") {
+        window.showAppMessage("Could not save housekeeping details.", "Main Door");
+      }
+    }
+  }
+
+  window.setMainDoorHkDailyMode = function(isDaily) {
+    setButtonActive("mainDoorHkWeeklyBtn", !isDaily);
+    setButtonActive("mainDoorHkDailyBtn", !!isDaily);
+  };
+
+  window.setMainDoorHkOccupied = function(isOccupied) {
+    const controls = getHousekeepingControls();
+    setButtonActive("mainDoorHkOccupiedBtn", !!isOccupied);
+    setButtonActive("mainDoorHkVacantBtn", !isOccupied);
+    if (controls.statusSelect) {
+      controls.statusSelect.disabled = !isOccupied;
+      if (!isOccupied) controls.statusSelect.value = "";
+    }
+  };
+
+  window.toggleMainDoorHkDehumidifier = function() {
+    const btn = document.getElementById("mainDoorHkDehumBtn");
+    if (btn) btn.classList.toggle("active-quick-floor");
+  };
+
+  window.saveMainDoorHousekeepingDetails = saveHousekeepingDetails;
+
+  function ensureHousekeepingDetailsSection() {
+    const view = document.getElementById("mainDoorDetailsView");
+    if (!view || view.classList.contains("hidden")) return;
+
+    let box = document.getElementById("mainDoorHousekeepingDetailsBox");
+    if (!box) {
+      const tools = document.getElementById("mainDoorDetailsTools");
+      box = document.createElement("div");
+      box.id = "mainDoorHousekeepingDetailsBox";
+      box.className = "quick-tools-selected-card";
+      box.innerHTML = '' +
+        '<div class="admin-dashboard-subtitle">Housekeeping Details</div>' +
+        '<div class="quick-tools-filter-row">' +
+          '<button id="mainDoorHkWeeklyBtn" type="button" onclick="setMainDoorHkDailyMode(false)">WEEKLY</button>' +
+          '<button id="mainDoorHkDailyBtn" type="button" onclick="setMainDoorHkDailyMode(true)">DAILY</button>' +
+        '</div>' +
+        '<div class="quick-tools-filter-row">' +
+          '<button id="mainDoorHkOccupiedBtn" type="button" onclick="setMainDoorHkOccupied(true)">OCCUPIED</button>' +
+          '<button id="mainDoorHkVacantBtn" type="button" onclick="setMainDoorHkOccupied(false)">VACANT</button>' +
+        '</div>' +
+        '<label>Resident Status</label>' +
+        '<select id="mainDoorHkResidentStatus">' +
+          '<option value="">None</option>' +
+          '<option value="Assisted">Assisted</option>' +
+          '<option value="Depending">Depending</option>' +
+          '<option value="Hospice">Hospice</option>' +
+        '</select>' +
+        '<div class="quick-tools-filter-row">' +
+          '<button id="mainDoorHkDehumBtn" type="button" onclick="toggleMainDoorHkDehumidifier()">DEHUMIDIFIER</button>' +
+        '</div>' +
+        '<div class="admin-dashboard-subtitle">Task Buttons</div>' +
+        '<div id="mainDoorHkTaskButtons" class="rooms-grid"></div>' +
+        '<button class="green" type="button" onclick="saveMainDoorHousekeepingDetails()">SAVE HOUSEKEEPING</button>' +
+        '<div id="mainDoorHkMessage" class="quick-tools-search-label"></div>';
+
+      if (tools && tools.parentNode) {
+        tools.parentNode.insertBefore(box, tools);
+      } else {
+        view.appendChild(box);
       }
     }
 
-    /* =========================
-       05B - CUSTOM MESSAGE POPUP
-    ========================== */
-
-    .app-message-bg {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(15,23,42,0.58);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 100000;
-      padding: 18px;
-      backdrop-filter: blur(2px);
+    const info = getSelectedDoorInfo();
+    if (currentDoorKey !== info.doorKey) {
+      loadHousekeepingDetails();
     }
+  }
 
-    .app-message-card {
-      width: 100%;
-      max-width: 360px;
-      background: linear-gradient(180deg, #ffffff, #f8fbff);
-      border-radius: 22px;
-      padding: 18px;
-      box-shadow: 0 14px 42px rgba(0,0,0,0.32);
-      text-align: center;
-      border: 1px solid rgba(21,101,192,0.18);
-    }
+  function updateHousekeepingVersionLabel() {
+    document.querySelectorAll("#mainDoorDetailsView .app-version-label, #adminQuickToolsView .app-version-label").forEach(function(label) {
+      label.innerText = PATCH_VERSION;
+    });
+  }
 
-    .app-message-card h3 {
-      margin: 0 0 10px;
-      font-size: 21px;
-      color: #0d47a1;
-      font-weight: 900;
-    }
+  const observer = new MutationObserver(function() {
+    ensureHousekeepingDetailsSection();
+    updateHousekeepingVersionLabel();
+  });
 
-    .app-message-card p {
-      margin: 0 0 14px;
-      font-size: 17px;
-      font-weight: bold;
-      line-height: 1.3;
-      color: #111;
-    }
+  observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
 
-    .app-message-card input {
-      text-align: center;
-      font-weight: 900;
-      font-size: 20px;
-      border: 2px solid #1565c0;
-      background: white;
-    }
+  window.setInterval(function() {
+    ensureHousekeepingDetailsSection();
+    updateHousekeepingVersionLabel();
+  }, 800);
 
-    .app-message-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 4px;
-    }
-
-    .app-message-actions.single-action {
-      grid-template-columns: 1fr;
-    }
-
-    .app-message-actions button {
-      margin: 0;
-      min-height: 44px;
-    }
-
-    .ptac-room-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin: 8px 0;
-    }
-
-    .ptac-room-button {
-      min-height: 76px;
-      margin: 0;
-      padding: 8px 4px;
-      border-radius: 12px;
-      background: #7f8c8d;
-      color: white;
-      font-size: 14px;
-      line-height: 1.15;
-    }
-
-    .ptac-room-button strong {
-      display: block;
-      font-size: 20px;
-      margin-bottom: 4px;
-    }
-
-    .ptac-room-button small {
-      display: block;
-      font-size: 11px;
-      font-weight: 800;
-      text-transform: uppercase;
-    }
-
-    .ptac-status-clean,
-    .ptac-status-Clean {
-      background: #2e7d32 !important;
-    }
-
-    .ptac-status-replace,
-    .ptac-status-Replace {
-      background: #f9a825 !important;
-      color: #111 !important;
-    }
-
-    .ptac-status-broken,
-    .ptac-status-Broken {
-      background: #c62828 !important;
-    }
-
-    .ptac-status-reset,
-    .ptac-status-Reset {
-      background: #7f8c8d !important;
-    }
-
-    .ptac-list-card {
-      border: 1px solid #d0d0d0;
-      border-radius: 12px;
-      padding: 12px;
-      margin: 8px 0;
-      text-align: left;
-      background: #fafafa;
-    }
-
-    .ptac-list-card h3 {
-      margin: 0 0 6px;
-      text-align: left;
-      font-size: 20px;
-    }
-
-    .ptac-list-card p {
-      margin: 4px 0;
-      font-size: 15px;
-      font-weight: 700;
-    }
-
-    .ptac-date-box {
-      margin: 8px 0;
-      text-align: left;
-      font-weight: 800;
-    }
-
-    .admin-schedule-buttons {
-      margin: 6px 0 8px;
-    }
-
-    .admin-schedule-buttons button {
-      min-height: 58px;
-      margin: 0;
-      background: #f9a825;
-      color: #111;
-      border: 1px solid #b8860b;
-      font-size: 18px;
-      font-weight: 900;
-    }
-
-    .admin-schedule-buttons button.active-admin-schedule {
-      outline: 3px solid #111;
-      outline-offset: -3px;
-    }
-
-    .admin-task-search-input {
-      text-align: center;
-      font-size: 20px;
-      font-weight: 900;
-      margin: 2px 0 8px;
-      min-height: 46px;
-    }
-
-    /* =========================
-       04D - ROOM / AREA QUICK TOOLS
-    ========================== */
-
-    .quick-tools-filter-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 7px;
-      margin: 8px 0;
-    }
-
-    .quick-tools-filter-row button {
-      min-height: 42px;
-      margin: 0;
-      font-size: 14px;
-      padding: 8px 4px;
-      background: #0d47a1;
-      color: white;
-    }
-
-    .quick-tools-filter-row button.active-quick-floor {
-      background: #f9a825 !important;
-      color: #111 !important;
-      outline: 3px solid #111;
-      outline-offset: -3px;
-    }
-
-    .quick-tools-search-label {
-      font-size: 15px;
-      font-weight: 900;
-      margin: 8px 0 3px;
-      color: #111;
-    }
-
-    .quick-tools-selected-card {
-      border: 2px solid #111;
-      border-radius: 14px;
-      padding: 9px;
-      margin: 8px 0;
-      background: #fafafa;
-      text-align: center;
-      font-size: 17px;
-      font-weight: 900;
-      color: #111;
-    }
-
-    .quick-tools-action-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 7px;
-      margin: 8px 0;
-    }
-
-    .quick-tools-action-grid button {
-      min-height: 46px;
-      margin: 0;
-      font-size: 14px;
-      padding: 8px 4px;
-    }
-
-    .quick-tools-area-buttons {
-      margin-top: 6px;
-    }
-
-    .quick-tools-area-buttons button {
-      min-height: 44px;
-      margin: 0;
-      padding: 8px 6px;
-      font-size: 14px;
-      line-height: 1.15;
-    }
+  updateHousekeepingVersionLabel();
+})();
